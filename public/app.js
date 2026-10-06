@@ -104,16 +104,21 @@ async function refreshMe() {
 function renderUserbox() {
   const box = $('#userbox');
   const adminLink = $('#navAdmin');
+  const profileLink = $('#navProfile');
   if (store.user) {
+    if (profileLink) profileLink.style.display = '';
     adminLink.style.display = store.user.role === 'admin' ? '' : 'none';
     $('#navMessages').style.display = '';
     $('#navModeration').style.display = ['admin', 'moderator'].includes(store.user.role) ? '' : 'none';
     box.innerHTML = `
-      ${avatar(store.user.username, store.user.avatarColor, store.user)}
-      <span><b>${esc(store.user.username)}</b>${roleBadge(store.user.role)}</span>
+      <a href="#/profile" class="userbox-profile" title="Открыть профиль">
+        ${avatar(store.user.username, store.user.avatarColor, store.user)}
+        <span class="userbox-profile-text"><b>${esc(store.user.username)}</b>${roleBadge(store.user.role)}</span>
+      </a>
       <button class="btn ghost small" id="btnLogout">Выйти</button>`;
     $('#btnLogout').onclick = () => { store.token = null; store.user = null; renderUserbox(); location.hash = '#/'; loadStats(); router(); };
   } else {
+    if (profileLink) profileLink.style.display = 'none';
     adminLink.style.display = 'none';
     $('#navMessages').style.display = 'none';
     $('#navModeration').style.display = 'none';
@@ -460,19 +465,229 @@ async function viewMembers() {
 }
 
 async function viewProfile(username) {
-  try {
+  if (!username) {
+    if (!store.user) { location.hash = '#/login'; return; }
+    username = store.user.username;
+  } else {
     username = decodeURIComponent(username);
-    const [u, prefixes] = await Promise.all([api(`/api/users/${encodeURIComponent(username)}`), store.user?.username === username ? api('/api/prefixes') : Promise.resolve([])]);
-    const canManage = store.user?.role === 'admin' && store.user.username !== u.username;
-    app.innerHTML = `<div class="crumb"><a href="#/members">Участники</a> / Профиль</div><div class="card"><div class="card-head">Профиль пользователя</div><div style="padding:20px;display:flex;gap:16px;align-items:flex-start">${avatar(u.username,u.avatarColor,u)}<div><h2 style="margin:0 0 4px">${esc(u.username)} ${roleBadge(u.role)}</h2>${u.prefix ? `<span class="prefix" style="background:${u.prefix.color}">${esc(u.prefix.name)}</span>` : ''}<p class="muted">${esc(u.bio || 'Пользователь пока ничего не рассказал о себе.')}</p><div class="muted">${u.gender ? `Пол: ${esc(u.gender)} · ` : ''}${u.age ? `Возраст: ${u.age} · ` : ''}Сообщений: ${u.postsCount} · Лайков: ${u.likesReceived}</div>${store.user && store.user.username !== u.username ? `<button class="btn small" id="writePm" style="margin-top:12px">Написать сообщение</button>` : ''}${canManage ? `<div style="margin-top:12px"><button class="btn danger small" id="profileBan">${u.banned ? 'Разбанить' : 'Забанить'}</button> <button class="btn ghost small" id="profileMute">Мут на 60 мин</button></div>` : ''}</div></div></div>${store.user?.username === u.username ? `<div class="card"><div class="card-head">Настройки профиля</div><div style="padding:14px"><label>О себе</label><textarea id="profileBio">${esc(u.bio)}</textarea><label>Пол</label><select id="profileGender"><option value="">Не указан</option><option ${u.gender==='Мужской'?'selected':''}>Мужской</option><option ${u.gender==='Женский'?'selected':''}>Женский</option><option ${u.gender==='Другой'?'selected':''}>Другой</option></select><label>Возраст</label><input id="profileAge" type="number" min="13" max="120" value="${u.age || ''}"><label>Аватарка</label><input id="profileAvatarFile" type="file" accept="image/*"><div id="avatarPreview" class="muted" style="margin-top:5px">Можно загрузить изображение до 2 МБ.</div><button class="btn" id="saveProfile" style="margin-top:12px">Сохранить профиль</button></div></div>` : ''}${prefixes.length ? `<div class="card"><div class="card-head">Префиксы</div><div style="padding:14px">${prefixes.map(p => `<div class="ticket-message"><span class="prefix" style="background:${p.color}">${esc(p.name)}</span> <span class="muted">${p.price} монет</span> <button class="btn small" data-buy-prefix="${p.id}">Приобрести</button></div>`).join('')}</div></div>` : ''}`;
-    $('#writePm')?.addEventListener('click', () => { location.hash = '#/messages'; setTimeout(() => { $('#pmTo').value = u.username; }, 100); });
-    document.querySelectorAll('[data-buy-prefix]').forEach(b => b.onclick = async () => { try { await api(`/api/prefixes/${b.dataset.buyPrefix}/buy`, { method:'POST' }); await refreshMe(); viewProfile(username); } catch (e) { alert(e.message); } });
-    $('#profileBan')?.addEventListener('click', async () => { await api(`/api/admin/users/${u.id}/sanction`, {method:'POST',body:JSON.stringify({type:'ban',value:!u.banned})}); viewProfile(username); });
-    $('#profileMute')?.addEventListener('click', async () => { await api(`/api/admin/users/${u.id}/sanction`, {method:'POST',body:JSON.stringify({type:'posting',minutes:60})}); viewProfile(username); });
+  }
+
+  const isMe = store.user?.username === username;
+  if (isMe) document.querySelector('[data-nav="profile"]')?.classList.add('active');
+  else document.querySelector('[data-nav="members"]')?.classList.add('active');
+
+  app.innerHTML = '<div class="muted">Загрузка профиля...</div>';
+
+  try {
+    const [u, prefixes] = await Promise.all([
+      api(`/api/users/${encodeURIComponent(username)}`),
+      isMe ? api('/api/prefixes').catch(() => []) : Promise.resolve([]),
+    ]);
+
+    const canManage = store.user?.role === 'admin' && !isMe;
+    const regDateStr = u.createdAt ? fmtDate(u.createdAt) : 'Не указана';
+
+    app.innerHTML = `
+      <div class="crumb">
+        <a href="#/">Форум</a> / <a href="#/members">Участники</a> / <span style="color:#fff">${esc(u.username)}</span>
+      </div>
+
+      <!-- Главная карточка профиля -->
+      <div class="profile-card">
+        <div class="profile-banner"></div>
+        <div class="profile-header-body">
+          <div class="profile-avatar-large" style="${u.avatar ? `background-image:url('${u.avatar}')` : `background:${u.avatarColor || '#0098be'}`}">
+            ${u.avatar ? '' : esc(u.username[0]?.toUpperCase() || '?')}
+          </div>
+          <div class="profile-head-info">
+            <h2>
+              <span>${esc(u.username)}</span>
+              ${roleBadge(u.role)}
+              ${u.prefix ? `<span class="prefix" style="background:${u.prefix.color}">${esc(u.prefix.name)}</span>` : ''}
+            </h2>
+            <div class="profile-meta-row">
+              <span class="profile-meta-item">
+                <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>
+                Регистрация: <b>${regDateStr}</b>
+              </span>
+              <span class="profile-meta-item">
+                <span class="${u.banned ? 'text-danger' : 'text-success'}">● ${u.banned ? 'Заблокирован' : 'Активен'}</span>
+              </span>
+            </div>
+
+            <!-- Сетка статистики пользователя -->
+            <div class="profile-stats-grid">
+              <div class="profile-stat-box">
+                <span class="profile-stat-label">Дата регистрации</span>
+                <span class="profile-stat-val">${regDateStr}</span>
+              </div>
+              <div class="profile-stat-box">
+                <span class="profile-stat-label">Сообщений на форуме</span>
+                <span class="profile-stat-val">${u.postsCount || 0}</span>
+              </div>
+              <div class="profile-stat-box">
+                <span class="profile-stat-label">Симпатий / Лайков</span>
+                <span class="profile-stat-val">${u.likesReceived || 0}</span>
+              </div>
+              <div class="profile-stat-box">
+                <span class="profile-stat-label">Баланс монет</span>
+                <span class="profile-stat-val" style="color:var(--accent-bright)">${u.balance ?? 0}</span>
+              </div>
+            </div>
+
+            ${!isMe && store.user ? `
+              <div style="margin-top:14px; display:flex; gap:8px">
+                <button class="btn small" id="writePm">💬 Написать сообщение</button>
+                ${canManage ? `
+                  <button class="btn danger small" id="profileBan">${u.banned ? 'Разбанить' : 'Забанить'}</button>
+                  <button class="btn ghost small" id="profileMute">Мут на 60 мин</button>
+                ` : ''}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- Детали и биография -->
+      <div class="card">
+        <div class="card-head">Информация об участнике</div>
+        <div style="padding:16px 20px">
+          <div class="profile-info-row">
+            <div class="profile-info-label">Имя пользователя:</div>
+            <div class="profile-info-value"><b>${esc(u.username)}</b></div>
+          </div>
+          <div class="profile-info-row">
+            <div class="profile-info-label">Роль в сообществе:</div>
+            <div class="profile-info-value">${roleBadge(u.role)}</div>
+          </div>
+          <div class="profile-info-row">
+            <div class="profile-info-label">Дата регистрации:</div>
+            <div class="profile-info-value">${regDateStr}</div>
+          </div>
+          <div class="profile-info-row">
+            <div class="profile-info-label">Пол:</div>
+            <div class="profile-info-value">${esc(u.gender || 'Не указан')}</div>
+          </div>
+          <div class="profile-info-row">
+            <div class="profile-info-label">Возраст:</div>
+            <div class="profile-info-value">${u.age ? `${u.age} лет` : 'Не указан'}</div>
+          </div>
+          <div class="profile-info-row">
+            <div class="profile-info-label">О себе:</div>
+            <div class="profile-info-value">${esc(u.bio || 'Пользователь пока ничего не рассказал о себе.')}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Если это свой профиль — форма настроек -->
+      ${isMe ? `
+        <div class="card">
+          <div class="card-head">Редактировать профиль</div>
+          <div style="padding:16px 20px">
+            <label>О себе</label>
+            <textarea id="profileBio" placeholder="Расскажите немного о себе, увлечениях или контактах...">${esc(u.bio || '')}</textarea>
+            
+            <div class="grid2" style="margin-top:10px">
+              <div>
+                <label>Пол</label>
+                <select id="profileGender">
+                  <option value="">Не указан</option>
+                  <option value="Мужской" ${u.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
+                  <option value="Женский" ${u.gender === 'Женский' ? 'selected' : ''}>Женский</option>
+                  <option value="Другой" ${u.gender === 'Другой' ? 'selected' : ''}>Другой</option>
+                </select>
+              </div>
+              <div>
+                <label>Возраст</label>
+                <input id="profileAge" type="number" min="13" max="120" placeholder="18" value="${u.age || ''}">
+              </div>
+            </div>
+
+            <label style="margin-top:12px">Аватарка</label>
+            <input id="profileAvatarFile" type="file" accept="image/*">
+            <div id="avatarPreview" class="muted" style="margin-top:6px; font-size:12px">Поддерживаются форматы JPG, PNG, WebP (до 2 МБ).</div>
+
+            <div style="margin-top:16px">
+              <button class="btn" id="saveProfile">Сохранить изменения</button>
+            </div>
+          </div>
+        </div>
+
+        ${prefixes && prefixes.length ? `
+          <div class="card">
+            <div class="card-head">Префиксы для ника</div>
+            <div style="padding:16px 20px">
+              ${prefixes.map((p) => `
+                <div class="ticket-message" style="display:flex; justify-content:space-between; align-items:center">
+                  <div>
+                    <span class="prefix" style="background:${p.color}">${esc(p.name)}</span>
+                    <span class="muted">${p.price} монет</span>
+                  </div>
+                  <button class="btn small" data-buy-prefix="${p.id}">Приобрести</button>
+                </div>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+      ` : ''}
+    `;
+
+    // Event listeners
+    $('#writePm')?.addEventListener('click', () => {
+      location.hash = '#/messages';
+      setTimeout(() => { const el = $('#pmTo'); if (el) el.value = u.username; }, 120);
+    });
+
+    document.querySelectorAll('[data-buy-prefix]').forEach((b) => {
+      b.onclick = async () => {
+        try {
+          await api(`/api/prefixes/${b.dataset.buyPrefix}/buy`, { method: 'POST' });
+          await refreshMe();
+          viewProfile(username);
+        } catch (e) { alert(e.message); }
+      };
+    });
+
+    $('#profileBan')?.addEventListener('click', async () => {
+      await api(`/api/admin/users/${u.id}/sanction`, { method: 'POST', body: JSON.stringify({ type: 'ban', value: !u.banned }) });
+      viewProfile(username);
+    });
+
+    $('#profileMute')?.addEventListener('click', async () => {
+      await api(`/api/admin/users/${u.id}/sanction`, { method: 'POST', body: JSON.stringify({ type: 'posting', minutes: 60 }) });
+      viewProfile(username);
+    });
+
     let avatarData = u.avatar || '';
-    $('#profileAvatarFile')?.addEventListener('change', e => { const file=e.target.files[0]; if (!file || file.size > 2_000_000) return alert('Файл должен быть меньше 2 МБ'); const reader=new FileReader(); reader.onload=()=>{avatarData=reader.result; $('#avatarPreview').textContent='Аватарка выбрана';}; reader.readAsDataURL(file); });
-    $('#saveProfile')?.addEventListener('click', async () => { try { await api('/api/me/profile',{method:'PUT',body:JSON.stringify({bio:$('#profileBio').value,gender:$('#profileGender').value,age:$('#profileAge').value,avatar:avatarData})}); await refreshMe(); viewProfile(username); } catch(e) { alert(e.message); } });
-  } catch (e) { app.innerHTML = `<div class="alert">${esc(e.message)}</div>`; }
+    $('#profileAvatarFile')?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 2_000_000) return alert('Файл должен быть меньше 2 МБ');
+      const reader = new FileReader();
+      reader.onload = () => {
+        avatarData = reader.result;
+        $('#avatarPreview').textContent = '✅ Аватарка выбрана (нажмите "Сохранить изменения")';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    $('#saveProfile')?.addEventListener('click', async () => {
+      try {
+        await api('/api/me/profile', {
+          method: 'PUT',
+          body: JSON.stringify({
+            bio: $('#profileBio').value,
+            gender: $('#profileGender').value,
+            age: $('#profileAge').value,
+            avatar: avatarData,
+          }),
+        });
+        await refreshMe();
+        viewProfile(username);
+      } catch (e) { alert(e.message); }
+    });
+  } catch (e) {
+    app.innerHTML = `<div class="alert">${esc(e.message)}</div>`;
+  }
 }
 
 async function viewMessages() {
