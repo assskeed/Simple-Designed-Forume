@@ -255,119 +255,234 @@ async function viewHome() {
     cachedCategories = cats;
     refreshSidebarCategories();
 
-    // Онлайн-аватарки
-    const onlineAvatars = (stats.onlineUsers || []).slice(0, 8).map((u) => {
-      const bg = u.avatar ? `background-image:url('${u.avatar}')` : `background:${u.avatarColor || '#0284c7'}`;
-      const char = u.avatar ? '' : esc(u.username[0]?.toUpperCase() || '?');
-      return `<div class="uf-live-avatar" style="${bg}" title="${esc(u.username)}">${char}</div>`;
-    }).join('');
+    // 1. Блоки категорий в стиле XenForo / Radmir
+    const catBlocksHtml = (cats || []).map((c) => {
+      const forumNodes = (c.forums || []).map((f) => {
+        const color = getForumColor(f.id);
 
-    // Левая колонка: категории и разделы с акцентными squircle-иконками
-    const allForums = cats.flatMap((c) => c.forums.map((f) => ({ ...f, catTitle: c.title })));
-    const catRows = allForums.map((f) => {
-      const color = getForumColor(f.id);
+        let extraHtml = '';
+        if (f.lastThread && f.last) {
+          extraHtml = `
+            <div class="forum-node-extra">
+              ${avatar(f.last.authorName, f.last.authorColor, { avatar: f.last.authorAvatar })}
+              <div class="forum-node-extra-body">
+                <a href="#/thread/${f.lastThread.id}" class="forum-node-extra-title" title="${esc(f.lastThread.title)}">${esc(f.lastThread.title)}</a>
+                <div class="forum-node-extra-meta">
+                  <span class="muted">${timeAgo(f.last.createdAt)}</span> · <a href="#/profile/${esc(f.last.authorName)}">${esc(f.last.authorName)}</a>
+                </div>
+              </div>
+            </div>`;
+        } else {
+          extraHtml = `
+            <div class="forum-node-extra">
+              <div class="forum-node-extra-empty">Нет новых тем</div>
+            </div>`;
+        }
+
+        return `
+          <div class="forum-node">
+            <div class="cat-squircle" style="background:${color}18; border-color:${color}40; color:${color}">
+              ${getForumIconSvg(f.id, f.name)}
+            </div>
+            <div class="forum-node-main">
+              <a href="#/forum/${f.id}" class="forum-node-title">${esc(f.name)}</a>
+              <div class="forum-node-desc">${esc(f.description || '')}</div>
+              <div class="forum-node-stats-mobile">
+                <span>Темы: <b>${f.threads}</b></span> · <span>Сообщения: <b>${f.messages}</b></span>
+              </div>
+            </div>
+            <div class="forum-node-stats">
+              <div class="node-stat-row"><span>Темы:</span><span class="node-stat-num">${f.threads}</span></div>
+              <div class="node-stat-row"><span>Сообщ:</span><span class="node-stat-num">${f.messages}</span></div>
+            </div>
+            ${extraHtml}
+          </div>`;
+      }).join('');
+
       return `
-        <div class="cat-row">
-          <div class="cat-squircle" style="background:${color}18; border-color:${color}40; color:${color}">
-            ${getForumIconSvg(f.id, f.name)}
+        <div class="cat-block">
+          <div class="cat-block-head">
+            <span>${esc(c.title)}</span>
+            <span class="cat-block-count">${c.forums.length} разделов</span>
           </div>
-          <div class="cat-info">
-            <a href="#/forum/${f.id}" class="cat-name">${esc(f.name)}</a>
-            <div class="cat-desc">${esc(f.description || '')}</div>
-          </div>
-          <div class="cat-badge">
-            <b>${f.threads}</b> <span class="muted" style="font-size:11px">тем</span>
+          <div class="cat-block-list">
+            ${forumNodes || '<div style="padding:16px" class="muted">В этой категории пока нет разделов</div>'}
           </div>
         </div>`;
     }).join('');
 
-    // Правая колонка: последние темы со счетчиком ответов и датой
-    const latestRows = (latestThreads.length ? latestThreads : []).slice(0, 20).map((t) => {
+    // 2. Виджет: Новые сообщения (последние обсуждения)
+    const latestWidgetRows = (latestThreads.length ? latestThreads : []).slice(0, 6).map((t) => {
       const color = getForumColor(t.forumId);
-      const isHot = t.replies >= 5;
+      const isHot = (t.replies || 0) >= 5;
       return `
-        <div class="stream-row">
+        <div class="widget-thread-row">
           ${latestAvatar(t.authorName, t.authorColor, t.authorAvatar)}
-          <div class="stream-content">
-            <a href="#/thread/${t.id}" class="stream-title">
+          <div class="widget-thread-main">
+            <a href="#/thread/${t.id}" class="widget-thread-title">
               ${t.pinned ? '<span class="nl-pin">📌</span>' : ''}${esc(t.title)}
             </a>
-            <div class="stream-meta">
+            <div class="widget-thread-meta">
               <span class="stream-cat-pill">
-                <span class="stream-dot" style="background:${color}; box-shadow:0 0 6px ${color}"></span>
+                <span class="stream-dot" style="background:${color}"></span>
                 <a href="#/forum/${t.forumId}">${esc(t.forumName)}</a>
               </span>
               <span>·</span>
               <span class="muted">${esc(t.authorName)}</span>
+              <span>·</span>
+              <span class="stream-time">${timeAgo(t.lastAt)}</span>
             </div>
           </div>
           <div class="stream-right">
             <span class="stream-replies-pill ${isHot ? 'hot' : ''}" title="Ответов">
-              <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M2.678 11.894a1 1 0 0 1 .287.801 10.97 10.97 0 0 1-.398 2c1.395-.323 2.427-.697 2.898-.882A1 1 0 0 1 5.9 13.8a8.03 8.03 0 0 0 2.1.272c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a1.042 1.042 0 0 1 .708.022z"/></svg>
               ${t.replies}
             </span>
-            <span class="stream-time">${timeAgo(t.lastAt)}</span>
           </div>
         </div>`;
     }).join('');
 
-    app.innerHTML = `
-      <div class="uf-toolbar">
-        <div class="uf-segmented">
-          <button class="uf-seg-btn active" onclick="location.hash='#/'">
-            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.606 2.046 1.488l.214.659a.5.5 0 0 0 .476.353H13.5A1.5 1.5 0 0 1 15 6v6.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z"/></svg>
-            <span>Разделы</span>
-          </button>
-          <button class="uf-seg-btn" onclick="location.hash='#/'">
-            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-1.5 2.5-1.5 3.5C2.5 13 4.5 16 8 16z"/></svg>
-            <span>Популярные</span>
-          </button>
-          <button class="uf-seg-btn" onclick="location.hash='#/'">
-            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/></svg>
-            <span>Свежее</span>
-          </button>
-        </div>
-        <div class="uf-quick-stat">
-          <span class="uf-live-pulse"><span class="uf-live-pulse-dot"></span></span>
-          <span>Сообщество UFounded</span>
-        </div>
-      </div>
+    // 3. Онлайн пользователи в виджете
+    const onlineUsersList = stats.onlineUsers || [];
+    const onlineBadgesHtml = onlineUsersList.length ? onlineUsersList.map((u) => {
+      const dotColor = u.role === 'admin' ? '#38bdf8' : (u.role === 'moderator' ? '#34d399' : '#94a3b8');
+      return `
+        <a href="#/profile/${esc(u.username)}" class="widget-online-user" title="${esc(u.username)} (${esc(u.role)})">
+          <span class="stream-dot" style="background:${dotColor}"></span>
+          <span>${esc(u.username)}</span>
+        </a>`;
+    }).join('') : '<span class="muted" style="font-size:12px">Нет пользователей онлайн</span>';
 
-      <div class="uf-livebar">
-        <div class="uf-live-left">
-          <div class="uf-live-badge">
-            <span class="uf-live-pulse"><span class="uf-live-pulse-ring"></span><span class="uf-live-pulse-dot"></span></span>
-            <span><b>${stats.onlineCount || 1}</b> онлайн</span>
-          </div>
-          <div class="uf-live-avatars">
-            ${onlineAvatars || '<div class="uf-live-avatar" style="background:#0284c7">U</div>'}
-          </div>
+    app.innerHTML = `
+      <div class="subnav-bar">
+        <div class="subnav-left">
+          <a href="#/" class="subnav-link active">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L8.354 1.146z"/></svg>
+            Разделы форума
+          </a>
+          <a href="#/forum/news" class="subnav-link">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M12 4v16l-5-4H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h3l5-4zm2 2.5a6 6 0 0 1 0 11v-2a4 4 0 0 0 0-7v-2zm3-3a9 9 0 0 1 0 17v-2a7 7 0 0 0 0-13V3.5z"/></svg>
+            Новости
+          </a>
+          <a href="#/members" class="subnav-link">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM5.5 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg>
+            Пользователи
+          </a>
+          <a href="#/support" class="subnav-link">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 12.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+            Поддержка
+          </a>
         </div>
-        <div class="uf-live-metrics">
-          <div class="uf-metric-chip">Темы: <b>${stats.threads ?? 0}</b></div>
-          <div class="uf-metric-chip">Сообщения: <b>${stats.messages ?? 0}</b></div>
-          <div class="uf-metric-chip">Пользователи: <b>${stats.users ?? 0}</b></div>
+        <div class="subnav-right">
+          ${store.user ? `
+            <a href="#/forum/cs2" class="btn small" style="display:inline-flex; align-items:center; gap:6px">
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2z"/></svg>
+              Создать тему
+            </a>
+          ` : `
+            <a href="#/login" class="btn ghost small">Войдите для публикации</a>
+          `}
         </div>
       </div>
 
       <div class="nl-home-grid">
-        <div class="nl-panel">
-          <div class="nl-panel-head">
-            <span>Категории</span>
-            <span>Статистика</span>
-          </div>
-          <div class="cat-list">
-            ${catRows || '<div style="padding:16px" class="muted">Разделов пока нет</div>'}
-          </div>
+        <div class="cat-blocks-container">
+          ${catBlocksHtml || '<div class="card" style="padding:20px; color:var(--muted)">Разделов пока нет</div>'}
         </div>
 
-        <div class="nl-panel">
-          <div class="nl-panel-head">
-            <span>Последняя активность</span>
-            <span style="font-weight:400; text-transform:none; color:var(--muted); font-size:11px">Всего: ${latestThreads.length}</span>
+        <div class="widget-stack">
+          <!-- Виджет 1: Новые сообщения -->
+          <div class="widget-card">
+            <div class="widget-head">
+              <div class="widget-head-left">
+                <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" style="color:var(--accent-bright)"><path d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-1.5 2.5-1.5 3.5C2.5 13 4.5 16 8 16z"/></svg>
+                <span>Новые сообщения</span>
+              </div>
+              <a href="#/forum/cs2" class="widget-head-link">Все темы →</a>
+            </div>
+            <div class="widget-latest-list">
+              ${latestWidgetRows || '<div style="padding:16px" class="muted">Тем пока нет</div>'}
+            </div>
           </div>
-          <div class="stream-list">
-            ${latestRows || '<div style="padding:16px" class="muted">Тем пока нет</div>'}
+
+          <!-- Виджет 2: Статистика форума -->
+          <div class="widget-card">
+            <div class="widget-head">
+              <div class="widget-head-left">
+                <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" style="color:var(--accent-bright)"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm4 10h1.5V7H4v5zm3 0h1.5V4H7v8zm3 0h1.5V9H10v3z"/></svg>
+                <span>Статистика форума</span>
+              </div>
+            </div>
+            <div class="widget-body">
+              <div class="widget-stats-rows">
+                <div class="widget-stat-pair">
+                  <span class="widget-stat-label">Темы:</span>
+                  <span class="widget-stat-value">${stats.threads ?? 0}</span>
+                </div>
+                <div class="widget-stat-pair">
+                  <span class="widget-stat-label">Сообщения:</span>
+                  <span class="widget-stat-value">${stats.messages ?? 0}</span>
+                </div>
+                <div class="widget-stat-pair">
+                  <span class="widget-stat-label">Пользователи:</span>
+                  <span class="widget-stat-value">${stats.users ?? 0}</span>
+                </div>
+                <div class="widget-stat-pair">
+                  <span class="widget-stat-label">Новый участник:</span>
+                  <span class="widget-stat-value">
+                    ${stats.newestUser ? `<a href="#/profile/${esc(stats.newestUser)}">${esc(stats.newestUser)}</a>` : '—'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Виджет 3: Пользователи онлайн -->
+          <div class="widget-card">
+            <div class="widget-head">
+              <div class="widget-head-left">
+                <span class="uf-live-pulse" style="width:8px; height:8px"><span class="uf-live-pulse-dot" style="background:#22c55e"></span></span>
+                <span>Сейчас на форуме</span>
+              </div>
+              <span class="cat-block-count">Онлайн: ${stats.onlineCount || 1}</span>
+            </div>
+            <div class="widget-body">
+              <div class="widget-online-flow">
+                ${onlineBadgesHtml}
+              </div>
+              <div class="widget-footer-count">
+                Всего посетителей: <b>${stats.onlineCount || 1}</b> (пользователей: <b>${onlineUsersList.length}</b>)
+              </div>
+            </div>
+          </div>
+
+          <!-- Виджет 4: Сообщество и навигация -->
+          <div class="widget-card">
+            <div class="widget-head">
+              <div class="widget-head-left">
+                <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" style="color:var(--accent-bright)"><path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1h12z"/></svg>
+                <span>Сообщество UFounded</span>
+              </div>
+            </div>
+            <div class="widget-body">
+              <div class="widget-social-grid">
+                <a href="#/support" class="widget-social-btn">
+                  <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 12.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+                  Поддержка
+                </a>
+                <a href="#/members" class="widget-social-btn">
+                  <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+                  Участники
+                </a>
+                <a href="#/messages" class="widget-social-btn">
+                  <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2z"/></svg>
+                  Чат / ЛС
+                </a>
+                <a href="#/forum/rules" class="widget-social-btn">
+                  <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M12 2l7 3.5v6.2c0 4.8-3.1 9.3-7 10.3-3.9-1-7-5.5-7-10.3V5.5L12 2z"/></svg>
+                  Правила
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>`;

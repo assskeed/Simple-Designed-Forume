@@ -247,8 +247,28 @@ function forumStats(forumId) {
     if (!last || p.createdAt > last.createdAt) last = p;
   }
   let lastThread = null;
-  if (last) lastThread = th.find((t) => t.id === last.threadId);
-  return { threads: th.length, messages: msgCount, last, lastThread };
+  let lastUser = null;
+  if (last) {
+    lastThread = th.find((t) => t.id === last.threadId);
+    lastUser = db.users.find((u) => u.id === last.authorId);
+  }
+  return {
+    threads: th.length,
+    messages: msgCount,
+    last: last ? {
+      id: last.id,
+      threadId: last.threadId,
+      authorName: last.authorName,
+      authorAvatar: lastUser?.avatar || '',
+      authorColor: lastUser?.avatarColor || '#3b9add',
+      createdAt: last.createdAt,
+    } : null,
+    lastThread: lastThread ? {
+      id: lastThread.id,
+      title: lastThread.title,
+      authorName: lastThread.authorName,
+    } : null,
+  };
 }
 
 // ---------- API ----------
