@@ -282,7 +282,7 @@ app.get('/api/forums', (req, res) => {
   res.json(out);
 });
 
-// Последние темы для ленты в стиле Neverlose
+// Последние темы для ленты форума
 app.get('/api/latest-threads', (req, res) => {
   const allForums = db.categories.flatMap((c) => c.forums);
   const list = db.threads

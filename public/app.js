@@ -40,7 +40,7 @@ function latestAvatar(name, color, avatarUrl) {
     : `<div class="nl-latest-ava" style="background:${esc(color || '#0098be')}">${esc((name || '?')[0].toUpperCase())}</div>`;
 }
 
-// Цветовая схема разделов в стиле Neverlose
+// Цветовая схема разделов форума
 const forumColors = {
   news: '#d9383a',
   rules: '#f36c21',
@@ -194,7 +194,7 @@ async function router() {
 }
 window.addEventListener('hashchange', router);
 
-// ---------- главная в стиле Neverlose ----------
+// ---------- главная страница ----------
 async function viewHome() {
   document.querySelector('[data-nav="home"]')?.classList.add('active');
   try {

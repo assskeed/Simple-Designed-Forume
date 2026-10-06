@@ -29,7 +29,8 @@
       "avatarColor": "#3498db",
       "createdAt": 1791304330435,
       "postsCount": 0,
-      "likesReceived": 0
+      "likesReceived": 0,
+      "balance": 0
     }
   ],
   "invites": [
@@ -153,7 +154,7 @@
       "createdAt": 1787940390510,
       "pinned": true,
       "closed": false,
-      "views": 980,
+      "views": 981,
       "postsCount": 1,
       "lastAt": 1787940390510,
       "lastBy": "ask"
