@@ -57,6 +57,55 @@ function getForumColor(id) {
   return forumColors[id] || '#0098be';
 }
 
+// Иконки разделов форума под конкретные темы
+function getForumIconSvg(id, name = '') {
+  const normId = (id || '').toLowerCase();
+  const normName = (name || '').toLowerCase();
+
+  // Новости проекта (рупор / объявления)
+  if (normId === 'news' || normName.includes('новост')) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 4v16l-5-4H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h3l5-4zm2 2.5a6 6 0 0 1 0 11v-2a4 4 0 0 0 0-7v-2zm3-3a9 9 0 0 1 0 17v-2a7 7 0 0 0 0-13V3.5z"/></svg>`;
+  }
+  // Правила и помощь (щит с подтверждением)
+  if (normId === 'rules' || normName.includes('правил') || normName.includes('помощ') || normName.includes('help')) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l7 3.5v6.2c0 4.8-3.1 9.3-7 10.3-3.9-1-7-5.5-7-10.3V5.5L12 2zm-1.1 13.4l5.4-5.4-1.4-1.4-4 4-2-2-1.4 1.4 3.4 3.4z"/></svg>`;
+  }
+  // Флудилка / Свободное общение (диалоговые пузыри)
+  if (normId === 'flood' || normName.includes('флуд') || normName.includes('общен') || normName.includes('оффтоп')) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20 2H8a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h1v3.5l4-3.5h7a3 3 0 0 0 3-3V5a3 3 0 0 0-3-3zm-6 16H6.5l-3 2.5V17H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h1v7a4 4 0 0 0 4 4h6v1z"/></svg>`;
+  }
+  // CS 2 (прицел / снайперская сетка)
+  if (normId === 'cs2' || normName.includes('cs') || normName.includes('кс') || normName.includes('counter')) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path fill-rule="evenodd" d="M11 2a1 1 0 0 1 2 0v2.06c4.07.47 7.47 3.87 7.94 7.94H23a1 1 0 1 1 0 2h-2.06c-.47 4.07-3.87 7.47-7.94 7.94V24a1 1 0 1 1-2 0v-2.06c-4.07-.47-7.47-3.87-7.94-7.94H1a1 1 0 1 1 0-2h2.06c.47-4.07 3.87-7.47 7.94-7.94V2zm0 4.08C7.62 6.54 4.54 9.62 4.08 13c.46 3.38 3.54 6.46 6.92 6.92V17a1 1 0 1 1 2 0v2.92c3.38-.46 6.46-3.54 6.92-6.92H17a1 1 0 1 1 0-2h2.92C19.46 7.62 16.38 4.54 13 4.08V7a1 1 0 1 1-2 0V4.08zM12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" clip-rule="evenodd"/></svg>`;
+  }
+  // Minecraft (3D изометрический воксель / куб)
+  if (normId === 'mc' || normName.includes('mine') || normName.includes('майн') || normName.includes('крафт')) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l9 5.2v9.6L12 22l-9-5.2V7.2L12 2zm0 2.3L4.8 8.4 12 12.6l7.2-4.2L12 4.3zM4 10.1v6.7l7 4v-6.7l-7-4zm16 0l-7 4v6.7l7-4v-6.7z"/></svg>`;
+  }
+  // GTA V / RP (спорткар / автомобиль)
+  if (normId === 'gta' || normName.includes('gta') || normName.includes('гта') || normName.includes('rp') || normName.includes('рп')) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.9 6c-.2-.6-.8-1-1.4-1h-11c-.7 0-1.2.4-1.4 1L3 12v7c0 .6.4 1 1 1h1c.6 0 1-.4 1-1v-1h12v1c0 .6.4 1 1 1h1c.6 0 1-.4 1-1v-7l-2.1-6zm-12.4 1h11l1.4 4H5.1l1.4-4zM6.5 15.5c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5zm11 0c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5z"/></svg>`;
+  }
+  // Читы и баги (жук-эксплойт)
+  if (normId === 'cheats' || normName.includes('чит') || normName.includes('баг') || normName.includes('эксплойт') || normName.includes('cheat')) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 8h-1.8a6 6 0 0 0-1.8-2l1.3-1.3a1 1 0 1 0-1.4-1.4l-1.6 1.6C13 4.3 12 4 11 4s-2 .3-2.7.9L6.7 3.3A1 1 0 0 0 5.3 4.7l1.3 1.3C5.6 6.9 5.2 7.8 4.8 9H3a1 1 0 1 0 0 2h1.6c0 .3 0 .7 0 1s0 .7 0 1H3a1 1 0 1 0 0 2h1.8c.5 1.6 1.8 2.9 3.4 3.5l-1.2 1.2a1 1 0 1 0 1.4 1.4l1.8-1.8c.3 0 .5.1.8.1s.5 0 .8-.1l1.8 1.8a1 1 0 0 0 1.4-1.4l-1.2-1.2c1.6-.6 2.9-1.9 3.4-3.5H19a1 1 0 1 0 0-2h-1.6c0-.3 0-.7 0-1s0-.7 0-1H19a1 1 0 1 0 0-2zm-6 7h-2c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h2c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1z"/></svg>`;
+  }
+  // Веб-разработка (теги кода < / >)
+  if (normId === 'web' || normName.includes('веб') || normName.includes('web') || normName.includes('html') || normName.includes('js')) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8.7 16.6L4.1 12l4.6-4.6L7.3 6l-6 6 6 6 1.4-1.4zm6.6 0l4.6-4.6-4.6-4.6L16.7 6l6 6-6 6-1.4-1.4zM13.6 3.5l-5 17 1.9.5 5-17-1.9-.5z"/></svg>`;
+  }
+  // Python / Backend (терминал >_)
+  if (normId === 'py' || normName.includes('python') || normName.includes('пайтон') || normName.includes('backend') || normName.includes('бэкенд') || normName.includes('бот')) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20 3H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H4V7h16v12zm-13-8l3.5 2.5L7 16l-1.2-.9 2.2-1.6-2.2-1.6L7 11zm5 5h5v1.5h-5V16z"/></svg>`;
+  }
+  // Маркет / Услуги (корзина)
+  if (normId === 'market' || normName.includes('маркет') || normName.includes('услуг') || normName.includes('магазин') || normName.includes('торг')) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.6-1.4 2.5c-.2.3-.2.6-.2 1 0 1.1.9 2 2 2h12v-2H7.4l.9-1.6h7.5c.8 0 1.4-.4 1.7-1l3.6-6.5c.1-.2.2-.4.2-.6 0-.6-.4-1-1-1H5.2L4.3 2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>`;
+  }
+  // Универсальная папка для категорий по умолчанию
+  return `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-1.5V9a3 3 0 0 0-3-3h-3.379a4.5 4.5 0 0 1-2.121-.527l-.6-.3A4.5 4.5 0 0 0 6.779 4.5H4.5A3 3 0 0 0 1.5 7.5v10.5a3 3 0 0 0 3 3h15z"/></svg>`;
+}
+
 function timeAgo(ts) {
   if (!ts) return '—';
   const diffSec = Math.max(0, Math.floor((Date.now() - Number(ts)) / 1000));
@@ -220,7 +269,7 @@ async function viewHome() {
       return `
         <div class="cat-row">
           <div class="cat-squircle" style="background:${color}18; border-color:${color}40; color:${color}">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-1.5V9a3 3 0 0 0-3-3h-3.379a4.5 4.5 0 0 1-2.121-.527l-.6-.3A4.5 4.5 0 0 0 6.779 4.5H4.5A3 3 0 0 0 1.5 7.5v10.5a3 3 0 0 0 3 3h15z"/></svg>
+            ${getForumIconSvg(f.id, f.name)}
           </div>
           <div class="cat-info">
             <a href="#/forum/${f.id}" class="cat-name">${esc(f.name)}</a>
@@ -336,12 +385,12 @@ async function viewForum(forumId) {
     app.innerHTML = `
       <div class="crumb"><a href="#/">Форум</a> / <span style="color:#fff">${esc(forum.name)}</span></div>
       <div class="card">
-        <div class="card-head">
-          <span>
-            <span class="nl-tag-square" style="background:${color}; margin-right:8px"></span>
-            ${esc(forum.icon || '')} ${esc(forum.name)}
-          </span>
-          <span class="muted" style="font-weight:400; font-size:12px">Тем: ${threads.length}</span>
+        <div class="card-head" style="display:flex; align-items:center; gap:12px">
+          <div class="cat-squircle" style="width:34px; height:34px; border-radius:9px; background:${color}18; border-color:${color}40; color:${color}; flex-shrink:0">
+            ${getForumIconSvg(forum.id, forum.name)}
+          </div>
+          <span style="font-size:15px; font-weight:700">${esc(forum.name)}</span>
+          <span class="muted" style="font-weight:400; font-size:12px; margin-left:auto">Тем: ${threads.length}</span>
         </div>
         ${threads.length ? threads.map((t) => `
           <div class="thread-row">
