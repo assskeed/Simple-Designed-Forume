@@ -1,0 +1,251 @@
+{
+  "users": [
+    {
+      "id": "u_ask_admin",
+      "username": "ask",
+      "passwordHash": "$2a$10$55/OzIYug6c6yILGcmDGwOLIIwjYgg.sC929.is0TsyD3DjA9DyM.",
+      "role": "admin",
+      "avatarColor": "#3b9add",
+      "createdAt": 1791304080423,
+      "postsCount": 3,
+      "likesReceived": 0,
+      "balance": 0,
+      "banned": false,
+      "bio": "Администратор форума",
+      "gender": "",
+      "age": null,
+      "avatar": "",
+      "prefix": {
+        "id": "founder",
+        "name": "Основатель",
+        "color": "#f1c40f"
+      }
+    },
+    {
+      "id": "u_fa5008ad923b",
+      "username": "test1",
+      "passwordHash": "$2a$10$YZ6Gr5coD./Zr3oWcFRqCOLIHbSkQBeplNXHQ7Urb1NmOjgYKK6uO",
+      "role": "user",
+      "avatarColor": "#3498db",
+      "createdAt": 1791304330435,
+      "postsCount": 0,
+      "likesReceived": 0
+    }
+  ],
+  "invites": [
+    {
+      "id": "inv_cb001f559f69",
+      "code": "SKEETBESTCHEAT",
+      "maxUses": 30,
+      "usedCount": 0,
+      "usedBy": [],
+      "createdBy": "ask",
+      "createdAt": 1788633626871,
+      "expiresAt": 1793893368121,
+      "note": "Основной инвайт",
+      "active": true
+    },
+    {
+      "id": "inv_7a2e525cd663",
+      "code": "112233",
+      "maxUses": 1,
+      "usedCount": 1,
+      "usedBy": [
+        {
+          "username": "test1",
+          "at": 1791304330435
+        }
+      ],
+      "createdBy": "ask",
+      "createdAt": 1791304301013,
+      "expiresAt": 1791909101013,
+      "note": "",
+      "active": true
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat_main",
+      "title": "Главное",
+      "forums": [
+        {
+          "id": "news",
+          "name": "Новости проекта",
+          "description": "Обновления форума, события и объявления администрации.",
+          "icon": "📢"
+        },
+        {
+          "id": "rules",
+          "name": "Правила и помощь",
+          "description": "Правила форума, гайды для новичков, вопросы администрации.",
+          "icon": "📜"
+        },
+        {
+          "id": "flood",
+          "name": "Флудилка",
+          "description": "Свободное общение на любые темы. Оффтоп разрешён.",
+          "icon": "💬"
+        }
+      ]
+    },
+    {
+      "id": "cat_games",
+      "title": "Игры и софт",
+      "forums": [
+        {
+          "id": "cs2",
+          "name": "CS 2",
+          "description": "Обсуждение игры, конфиги, скины, поиск тиммейтов.",
+          "icon": "🔫"
+        },
+        {
+          "id": "mc",
+          "name": "Minecraft",
+          "description": "Серверы, моды, плагины, сборки и карты.",
+          "icon": "🧱"
+        },
+        {
+          "id": "gta",
+          "name": "GTA V / RP",
+          "description": "Гайды, RP-серверы, торговля и обсуждение обновлений.",
+          "icon": "🚗"
+        },
+        {
+          "id": "cheats",
+          "name": "Читы и баги",
+          "description": "Обсуждение багов, эксплойтов и античитов. Без вредоносов.",
+          "icon": "🐞"
+        }
+      ]
+    },
+    {
+      "id": "cat_dev",
+      "title": "Разработка и маркет",
+      "forums": [
+        {
+          "id": "web",
+          "name": "Веб-разработка",
+          "description": "HTML, CSS, JS, React, backend. Помощь с кодом.",
+          "icon": "🌐"
+        },
+        {
+          "id": "py",
+          "name": "Python / Backend",
+          "description": "Боты, парсинг, API, базы данных, хостинг.",
+          "icon": "🐍"
+        },
+        {
+          "id": "market",
+          "name": "Маркет / Услуги",
+          "description": "Покупка и продажа аккаунтов, услуг, дизайна. Только через гаранта.",
+          "icon": "🛒"
+        }
+      ]
+    }
+  ],
+  "threads": [
+    {
+      "id": "t_cf8e2af701dd",
+      "forumId": "rules",
+      "title": "Правила форума (кратко)",
+      "authorId": "u_ask_admin",
+      "authorName": "ask",
+      "createdAt": 1787940390510,
+      "pinned": true,
+      "closed": false,
+      "views": 980,
+      "postsCount": 1,
+      "lastAt": 1787940390510,
+      "lastBy": "ask"
+    },
+    {
+      "id": "t_c23c7ea80227",
+      "forumId": "cs2",
+      "title": "re123",
+      "authorId": "u_ask_admin",
+      "authorName": "ask",
+      "createdAt": 1788631694840,
+      "pinned": false,
+      "closed": false,
+      "views": 3,
+      "postsCount": 1,
+      "lastAt": 1788631694840,
+      "lastBy": "ask"
+    },
+    {
+      "id": "t_c39cc29c6246",
+      "forumId": "cs2",
+      "title": "Всем ку",
+      "authorId": "u_ask_admin",
+      "authorName": "ask",
+      "createdAt": 1788633571743,
+      "pinned": true,
+      "closed": false,
+      "views": 3,
+      "postsCount": 1,
+      "lastAt": 1788633571743,
+      "lastBy": "ask"
+    }
+  ],
+  "posts": [
+    {
+      "id": "p_e5a5d349cfef",
+      "threadId": "t_cf8e2af701dd",
+      "authorId": "u_ask_admin",
+      "authorName": "ask",
+      "text": "1. Без спама и флуда вне флудилки.\n2. Без вредоносов и стилеров — бан навсегда.\n3. Маркет — только через гаранта.\n4. Уважайте других участников.",
+      "createdAt": 1787940390510,
+      "likes": [],
+      "status": "approved"
+    },
+    {
+      "id": "p_72ca5faacf99",
+      "threadId": "t_c23c7ea80227",
+      "authorId": "u_ask_admin",
+      "authorName": "ask",
+      "text": "112231",
+      "createdAt": 1788631694840,
+      "likes": [],
+      "status": "approved"
+    },
+    {
+      "id": "p_2a32a41350b9",
+      "threadId": "t_c39cc29c6246",
+      "authorId": "u_ask_admin",
+      "authorName": "ask",
+      "text": "Всем ку, добро пожаловать в сообщество!",
+      "createdAt": 1788633571743,
+      "likes": [],
+      "status": "approved"
+    }
+  ],
+  "meta": {
+    "createdAt": 1791301368121
+  },
+  "conversations": [],
+  "messages": [],
+  "tickets": [],
+  "prefixes": [
+    {
+      "id": "trusted",
+      "name": "Проверенный",
+      "color": "#4a9de2",
+      "price": 100,
+      "grantable": true
+    },
+    {
+      "id": "helper",
+      "name": "Помощник",
+      "color": "#2ecc71",
+      "price": 250,
+      "grantable": true
+    },
+    {
+      "id": "vip",
+      "name": "VIP",
+      "color": "#e67e22",
+      "price": 500,
+      "grantable": true
+    }
+  ]
+}

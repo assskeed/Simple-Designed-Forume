@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UFounded — сообщество</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="logo-wrap">
+      <a class="logo-ufounded" href="#/" title="UFounded">
+        <div class="logo-chev top">
+          <svg viewBox="0 0 54 14" width="44" height="11" fill="none" stroke="#0098be" stroke-width="3.5" stroke-linecap="square" stroke-linejoin="miter">
+            <path d="M 4 12 L 27 3 L 50 12"/>
+          </svg>
+        </div>
+        <div class="logo-text"><span class="u-accent">U</span>FOUNDED</div>
+        <div class="logo-chev bottom">
+          <svg viewBox="0 0 54 14" width="44" height="11" fill="none" stroke="#0098be" stroke-width="3.5" stroke-linecap="square" stroke-linejoin="miter">
+            <path d="M 4 2 L 27 11 L 50 2"/>
+          </svg>
+        </div>
+      </a>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="#/" data-nav="home">Форум</a>
+      <a href="#/members" data-nav="members">Участники</a>
+      <a href="#/messages" data-nav="messages" id="navMessages" style="display:none">ЛС</a>
+      <a href="#/support" data-nav="support">Поддержка</a>
+      <a href="#/moderation" data-nav="moderation" id="navModeration" style="display:none">Модерация</a>
+      <a href="#/admin" data-nav="admin" id="navAdmin" style="display:none">Админ</a>
+    </nav>
+    <div class="top-search">
+      <svg class="search-icon" viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+      <input id="globalSearch" placeholder="Поиск по темам..." autocomplete="off">
+      <div id="searchResults" class="search-results"></div>
+    </div>
+    <div class="userbox" id="userbox"></div>
+  </div>
+</header>
+
+<div class="nl-container wrap">
+  <aside class="nl-sidebar" id="nlSidebar">
+    <div class="nl-sidebar-head">
+      <a href="#/" class="nl-side-item active" id="sideTopicsLink">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M7.765 1.559a.5.5 0 0 1 .47 0l6 3.25a.5.5 0 0 1 0 .882l-6 3.25a.5.5 0 0 1-.47 0l-6-3.25a.5.5 0 0 1 0-.882l6-3.25zM1.5 8.75a.5.5 0 0 1 .735-.441L8 11.235l5.765-2.926a.5.5 0 0 1 .53.882l-6 3.25a.5.5 0 0 1-.47 0l-6-3.25a.5.5 0 0 1-.265-.441z"/></svg>
+        <span>Темы</span>
+      </a>
+      <div class="nl-side-more" id="sideMoreBtn">⋮ Ещё</div>
+    </div>
+
+    <div class="nl-side-title">
+      <span>Разделы</span>
+      <span class="nl-side-chevron">▾</span>
+    </div>
+
+    <div class="nl-side-categories" id="sidebarCategories"></div>
+
+    <div class="nl-side-all-link">
+      <a href="#/" class="nl-side-item highlight" id="sideAllCategories">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/></svg>
+        <span>Все разделы</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="nl-main">
+    <main id="app"></main>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div>UFounded · сообщество и поддержка</div>
+    <div class="muted">Регистрация доступна по приглашениям · Коды создаёт администрация</div>
+  </div>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>
