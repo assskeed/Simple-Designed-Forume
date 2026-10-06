@@ -86,7 +86,7 @@ async function refreshSidebarCategories() {
       const color = getForumColor(f.id);
       const active = currentHash === `#/forum/${f.id}` ? 'active' : '';
       return `<a href="#/forum/${f.id}" class="nl-side-cat-row ${active}">
-        <span class="nl-side-square" style="background:${color}"></span>
+        <span class="side-dot" style="background:${color}; color:${color}"></span>
         <span>${esc(f.name)}</span>
       </a>`;
     }).join('');
@@ -208,26 +208,26 @@ async function viewHome() {
 
     // Онлайн-аватарки
     const onlineAvatars = (stats.onlineUsers || []).slice(0, 8).map((u) => {
-      const bg = u.avatar ? `background-image:url('${u.avatar}')` : `background:${u.avatarColor || '#0098be'}`;
+      const bg = u.avatar ? `background-image:url('${u.avatar}')` : `background:${u.avatarColor || '#0284c7'}`;
       const char = u.avatar ? '' : esc(u.username[0]?.toUpperCase() || '?');
-      return `<div class="online-avatar" style="${bg}" title="${esc(u.username)}">${char}</div>`;
+      return `<div class="uf-live-avatar" style="${bg}" title="${esc(u.username)}">${char}</div>`;
     }).join('');
 
-    // Левая колонка: категории и разделы с вертикальными полосками
+    // Левая колонка: категории и разделы с акцентными squircle-иконками
     const allForums = cats.flatMap((c) => c.forums.map((f) => ({ ...f, catTitle: c.title })));
     const catRows = allForums.map((f) => {
       const color = getForumColor(f.id);
       return `
-        <div class="nl-cat-row">
-          <div class="nl-cat-indicator" style="background:${color}"></div>
-          <div class="nl-cat-info">
-            <a href="#/forum/${f.id}" class="nl-cat-name">
-              <span class="nl-tag-square" style="background:${color}; margin-right:6px"></span>${esc(f.name)}
-            </a>
-            <div class="nl-cat-desc">${esc(f.description || '')}</div>
+        <div class="cat-row">
+          <div class="cat-squircle" style="background:${color}18; border-color:${color}40; color:${color}">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-1.5V9a3 3 0 0 0-3-3h-3.379a4.5 4.5 0 0 1-2.121-.527l-.6-.3A4.5 4.5 0 0 0 6.779 4.5H4.5A3 3 0 0 0 1.5 7.5v10.5a3 3 0 0 0 3 3h15z"/></svg>
           </div>
-          <div class="nl-cat-count">
-            <b>${f.threads}</b> <span class="muted" style="font-size:11px">/ тем</span>
+          <div class="cat-info">
+            <a href="#/forum/${f.id}" class="cat-name">${esc(f.name)}</a>
+            <div class="cat-desc">${esc(f.description || '')}</div>
+          </div>
+          <div class="cat-badge">
+            <b>${f.threads}</b> <span class="muted" style="font-size:11px">тем</span>
           </div>
         </div>`;
     }).join('');
@@ -237,75 +237,88 @@ async function viewHome() {
       const color = getForumColor(t.forumId);
       const isHot = t.replies >= 5;
       return `
-        <div class="nl-latest-row">
+        <div class="stream-row">
           ${latestAvatar(t.authorName, t.authorColor, t.authorAvatar)}
-          <div class="nl-latest-content">
-            <a href="#/thread/${t.id}" class="nl-latest-title">
+          <div class="stream-content">
+            <a href="#/thread/${t.id}" class="stream-title">
               ${t.pinned ? '<span class="nl-pin">📌</span>' : ''}${esc(t.title)}
             </a>
-            <div class="nl-latest-meta">
-              <span class="nl-cat-tag">
-                <span class="nl-tag-square" style="background:${color}"></span>
+            <div class="stream-meta">
+              <span class="stream-cat-pill">
+                <span class="stream-dot" style="background:${color}; box-shadow:0 0 6px ${color}"></span>
                 <a href="#/forum/${t.forumId}">${esc(t.forumName)}</a>
               </span>
               <span>·</span>
               <span class="muted">${esc(t.authorName)}</span>
             </div>
           </div>
-          <div class="nl-latest-right">
-            <span class="nl-count-badge ${isHot ? 'hot' : 'cyan'}">${t.replies}</span>
-            <span class="nl-time-ago">${timeAgo(t.lastAt)}</span>
+          <div class="stream-right">
+            <span class="stream-replies-pill ${isHot ? 'hot' : ''}" title="Ответов">
+              <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M2.678 11.894a1 1 0 0 1 .287.801 10.97 10.97 0 0 1-.398 2c1.395-.323 2.427-.697 2.898-.882A1 1 0 0 1 5.9 13.8a8.03 8.03 0 0 0 2.1.272c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a1.042 1.042 0 0 1 .708.022z"/></svg>
+              ${t.replies}
+            </span>
+            <span class="stream-time">${timeAgo(t.lastAt)}</span>
           </div>
         </div>`;
     }).join('');
 
     app.innerHTML = `
-      <div class="nl-toolbar">
-        <div class="nl-tool-left">
-          <button class="nl-icon-btn" title="Разделы" onclick="location.hash='#/'">
-            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/></svg>
+      <div class="uf-toolbar">
+        <div class="uf-segmented">
+          <button class="uf-seg-btn active" onclick="location.hash='#/'">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.606 2.046 1.488l.214.659a.5.5 0 0 0 .476.353H13.5A1.5 1.5 0 0 1 15 6v6.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z"/></svg>
+            <span>Разделы</span>
           </button>
-          <div class="nl-pill-dropdown" onclick="location.hash='#/'">
-            <span>Разделы</span> <span style="font-size:10px; margin-left:4px">›</span>
-          </div>
-          <div class="nl-tabs">
-            <button class="nl-tab active">Разделы</button>
-            <button class="nl-tab" onclick="location.hash='#/'">Новые</button>
-            <button class="nl-tab" onclick="location.hash='#/'">Топ</button>
-          </div>
+          <button class="uf-seg-btn" onclick="location.hash='#/'">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-1.5 2.5-1.5 3.5C2.5 13 4.5 16 8 16z"/></svg>
+            <span>Популярные</span>
+          </button>
+          <button class="uf-seg-btn" onclick="location.hash='#/'">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/></svg>
+            <span>Свежее</span>
+          </button>
+        </div>
+        <div class="uf-quick-stat">
+          <span class="uf-live-pulse"><span class="uf-live-pulse-dot"></span></span>
+          <span>Сообщество UFounded</span>
         </div>
       </div>
 
-      <div class="nl-onlinebar">
-        <span class="nl-online-label">Онлайн (${stats.onlineCount || 1}):</span>
-        <div class="nl-online-avatars">
-          ${onlineAvatars || '<div class="online-avatar" style="background:#0098be">U</div>'}
+      <div class="uf-livebar">
+        <div class="uf-live-left">
+          <div class="uf-live-badge">
+            <span class="uf-live-pulse"><span class="uf-live-pulse-ring"></span><span class="uf-live-pulse-dot"></span></span>
+            <span><b>${stats.onlineCount || 1}</b> онлайн</span>
+          </div>
+          <div class="uf-live-avatars">
+            ${onlineAvatars || '<div class="uf-live-avatar" style="background:#0284c7">U</div>'}
+          </div>
         </div>
-        <div class="nl-online-stats">
-          <span>Тем: <b>${stats.threads ?? 0}</b></span> ·
-          <span>Сообщений: <b>${stats.messages ?? 0}</b></span> ·
-          <span>Участников: <b>${stats.users ?? 0}</b></span>
+        <div class="uf-live-metrics">
+          <div class="uf-metric-chip">Темы: <b>${stats.threads ?? 0}</b></div>
+          <div class="uf-metric-chip">Сообщения: <b>${stats.messages ?? 0}</b></div>
+          <div class="uf-metric-chip">Пользователи: <b>${stats.users ?? 0}</b></div>
         </div>
       </div>
 
       <div class="nl-home-grid">
         <div class="nl-panel">
           <div class="nl-panel-head">
-            <span>Разделы</span>
-            <span>Темы</span>
+            <span>Категории</span>
+            <span>Статистика</span>
           </div>
-          <div class="nl-cat-list">
-            ${catRows || '<div style="padding:14px" class="muted">Разделов пока нет</div>'}
+          <div class="cat-list">
+            ${catRows || '<div style="padding:16px" class="muted">Разделов пока нет</div>'}
           </div>
         </div>
 
         <div class="nl-panel">
           <div class="nl-panel-head">
-            <span>Последние темы</span>
+            <span>Последняя активность</span>
             <span style="font-weight:400; text-transform:none; color:var(--muted); font-size:11px">Всего: ${latestThreads.length}</span>
           </div>
-          <div class="nl-latest-list">
-            ${latestRows || '<div style="padding:14px" class="muted">Тем пока нет</div>'}
+          <div class="stream-list">
+            ${latestRows || '<div style="padding:16px" class="muted">Тем пока нет</div>'}
           </div>
         </div>
       </div>`;
@@ -694,7 +707,7 @@ async function viewMessages() {
   if (!store.user) { location.hash = '#/login'; return; }
   document.querySelector('[data-nav="messages"]')?.classList.add('active');
   const messages = await api('/api/messages');
-  app.innerHTML = `<div class="crumb">Личные сообщения</div><div class="grid2"><div class="card"><div class="card-head">Новое сообщение</div><div style="padding:14px"><label>Получатель</label><input id="pmTo" placeholder="Ник пользователя"><label>Сообщение</label><textarea id="pmText"></textarea><button class="btn" id="sendPm" style="margin-top:10px">Отправить</button><div id="pmErr"></div></div></div><div class="card"><div class="card-head">Переписка</div>${messages.length ? messages.map(m => `<div class="ticket-message"><b>${m.fromId === store.user.id ? 'Вы' : `<a href="#/profile/${encodeURIComponent(m.from.username)}">${esc(m.from.username)}</a>`}</b> <span class="muted">→ ${m.toId === store.user.id ? 'Вы' : esc(m.to.username)} · ${fmtDate(m.createdAt)}</span><br>${esc(m.text)}</div>`).join('') : '<div style="padding:14px" class="muted">Сообщений пока нет.</div>'}</div></div>`;
+  app.innerHTML = `<div class="crumb">Личные сообщения</div><div class="grid2"><div class="card"><div class="card-head">Новое сообщение</div><div style="padding:14px"><label>Получатель</label><input id="pmTo" placeholder="Ник пользователя"><label>Сообщение</label><textarea id="pmText"></textarea><button class="btn" id="sendPm" style="margin-top:10px">Отправить</button><div id="pmErr" style="margin-top:14px"></div></div></div><div class="card"><div class="card-head">Переписка</div>${messages.length ? messages.map(m => `<div class="ticket-message"><b>${m.fromId === store.user.id ? 'Вы' : `<a href="#/profile/${encodeURIComponent(m.from.username)}">${esc(m.from.username)}</a>`}</b> <span class="muted">→ ${m.toId === store.user.id ? 'Вы' : esc(m.to.username)} · ${fmtDate(m.createdAt)}</span><br>${esc(m.text)}</div>`).join('') : '<div style="padding:14px" class="muted">Сообщений пока нет.</div>'}</div></div>`;
   $('#sendPm').onclick = async () => { try { await api('/api/messages', { method:'POST', body: JSON.stringify({ username:$('#pmTo').value, text:$('#pmText').value }) }); viewMessages(); } catch(e) { $('#pmErr').innerHTML = `<div class="alert">${esc(e.message)}</div>`; } };
 }
 
