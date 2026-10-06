@@ -9,7 +9,7 @@
       "createdAt": 1791304080423,
       "postsCount": 3,
       "likesReceived": 0,
-      "balance": 0,
+      "balance": 3150,
       "banned": false,
       "bio": "Администратор форума",
       "gender": "",
@@ -30,7 +30,40 @@
       "createdAt": 1791304330435,
       "postsCount": 0,
       "likesReceived": 0,
-      "balance": 0
+      "balance": 2500
+    },
+    {
+      "id": "u_4da5a867f984",
+      "username": "buyer_545",
+      "passwordHash": "$2a$10$.x3x9jONO05PLsFHXXMqWuoq9IxGeos.l7cLETgk7AdoRA..SsKxG",
+      "role": "user",
+      "avatarColor": "#16a085",
+      "createdAt": 1791309340363,
+      "postsCount": 0,
+      "likesReceived": 0,
+      "balance": 2500
+    },
+    {
+      "id": "u_7467168cd9d5",
+      "username": "buyer_test_824",
+      "passwordHash": "$2a$10$HJ0ruIF9.KajFudcycSiPehjuF.rztqqfdkYCAKOhWKkx1nfGCEei",
+      "role": "user",
+      "avatarColor": "#8e44ad",
+      "createdAt": 1791309347279,
+      "postsCount": 0,
+      "likesReceived": 0,
+      "balance": 2500
+    },
+    {
+      "id": "u_6b72ba58f8d5",
+      "username": "buyer_8487",
+      "passwordHash": "$2a$10$YHldVC1OAvKSxskNWXylA.cN.mfFQriSylp4DNxNHBR7x8XCeuFIC",
+      "role": "user",
+      "avatarColor": "#3498db",
+      "createdAt": 1791309414039,
+      "postsCount": 0,
+      "likesReceived": 0,
+      "balance": 2350
     }
   ],
   "invites": [
@@ -60,6 +93,31 @@
       "createdBy": "ask",
       "createdAt": 1791304301013,
       "expiresAt": 1791909101013,
+      "note": "",
+      "active": true
+    },
+    {
+      "id": "inv_1e41ed6dacb0",
+      "code": "BUY-TEST-CODE",
+      "maxUses": 5,
+      "usedCount": 3,
+      "usedBy": [
+        {
+          "username": "buyer_545",
+          "at": 1791309340363
+        },
+        {
+          "username": "buyer_test_824",
+          "at": 1791309347279
+        },
+        {
+          "username": "buyer_8487",
+          "at": 1791309414039
+        }
+      ],
+      "createdBy": "ask",
+      "createdAt": 1791309340260,
+      "expiresAt": 1791395740260,
       "note": "",
       "active": true
     }
@@ -247,6 +305,148 @@
       "color": "#e67e22",
       "price": 500,
       "grantable": true
+    }
+  ],
+  "market": [
+    {
+      "id": "mkt_32abb94d5917",
+      "title": "Steam CS2 Prime Test Account with Knife",
+      "category": "cs2",
+      "price": 150,
+      "description": "Test description for CS2 account",
+      "origin": "personal",
+      "warranty": "24h",
+      "credentials": "test_cs2_login:test_password_123",
+      "sellerId": "u_ask_admin",
+      "sellerName": "ask",
+      "sellerAvatar": "",
+      "sellerColor": "#3b9add",
+      "status": "sold",
+      "buyerId": "u_6b72ba58f8d5",
+      "buyerName": "buyer_8487",
+      "boughtAt": 1791309414064,
+      "views": 2,
+      "createdAt": 1791309329184
+    },
+    {
+      "id": "mkt_79b7620ff6d8",
+      "title": "Steam | CS2 Prime (15 медалей) + Инвентарь 3,850 ₽ | 1,450 ч. | Родная почта",
+      "category": "cs2",
+      "price": 690,
+      "description": "Личный аккаунт Steam. CS2 Prime статус, выслуга 7 лет, инвентарь на 3850 руб (АК-47 Ледяной уголь, AWP Древесная гадюка, глок и др.). Без VAC и привязок. Родная почта и первый чек в комплекте.",
+      "origin": "personal",
+      "warranty": "24h",
+      "credentials": "cs2_pro_player:SuperSecretPass2026! | Почта: cs2_first_mail@rambler.ru:RamblerPass99 | R-код: R12345",
+      "sellerId": "u_ask_admin",
+      "sellerName": "ask",
+      "sellerAvatar": "",
+      "sellerColor": "#3b9add",
+      "status": "active",
+      "buyerId": null,
+      "buyerName": null,
+      "boughtAt": null,
+      "views": 148,
+      "createdAt": 1791298116613
+    },
+    {
+      "id": "mkt_e0526f1f3c88",
+      "title": "Telegram | Аккаунт с Premium на 6 месяцев + Канал 1.8k подписчиков",
+      "category": "telegram",
+      "price": 420,
+      "description": "Чистый аккаунт Telegram, зарегистрирован 1.5 года назад (отлежка). Подписка Telegram Premium активна еще 6 месяцев. Владелец канала на 1800 живых подписчиков без спамблока.",
+      "origin": "personal",
+      "warranty": "24h",
+      "credentials": "+79991234567 | 2FA пароль: TgSecretPass2026 | Tdata / Session string в архиве",
+      "sellerId": "u_ask_admin",
+      "sellerName": "ask",
+      "sellerAvatar": "",
+      "sellerColor": "#3b9add",
+      "status": "active",
+      "buyerId": null,
+      "buyerName": null,
+      "boughtAt": null,
+      "views": 94,
+      "createdAt": 1791290916613
+    },
+    {
+      "id": "mkt_3add3139d47d",
+      "title": "Discord | Подписка Nitro Boost 1 год + Значок Early Supporter",
+      "category": "discord",
+      "price": 850,
+      "description": "Discord аккаунт с регистрацией в 2018 году, значок Early Supporter. Активная подписка Nitro на 1 год без слета. 2 сервера с бустами 3 уровня.",
+      "origin": "resale",
+      "warranty": "12h",
+      "credentials": "discord_vip_user@gmail.com:DiscordPass999 | Токен: mfa.a9sd8fa8sdf7a6sd5f_secure_token",
+      "sellerId": "u_ask_admin",
+      "sellerName": "ask",
+      "sellerAvatar": "",
+      "sellerColor": "#3b9add",
+      "status": "active",
+      "buyerId": null,
+      "buyerName": null,
+      "boughtAt": null,
+      "views": 215,
+      "createdAt": 1791280116613
+    },
+    {
+      "id": "mkt_5fe85c4c09ce",
+      "title": "Epic Games | GTA V Premium + Cyberpunk 2077 + RDR2 + 55 раздач",
+      "category": "epic",
+      "price": 550,
+      "description": "Аккаунт Epic Games с купленными GTA 5 (чистый онлайн без банов), Cyberpunk 2077, Red Dead Redemption 2 и более 55 топовых игр. Смена почты доступна моментально.",
+      "origin": "personal",
+      "warranty": "24h",
+      "credentials": "epic_gamer2026@rambler.ru:EpicMasterKey123",
+      "sellerId": "u_ask_admin",
+      "sellerName": "ask",
+      "sellerAvatar": "",
+      "sellerColor": "#3b9add",
+      "status": "active",
+      "buyerId": null,
+      "buyerName": null,
+      "boughtAt": null,
+      "views": 68,
+      "createdAt": 1791265716613
+    },
+    {
+      "id": "mkt_bce13e9b129e",
+      "title": "Valorant | Vandal Prime + Phantom Ion + Нож Reaver | Ранг: Платина 2",
+      "category": "valorant",
+      "price": 1200,
+      "description": "Личный аккаунт Valorant регион EU. Скины: Vandal Prime (все расцветки), Phantom Ion, Керамбит Reaver. Полный доступ со сменой почты, доступен соревновательный режим.",
+      "origin": "personal",
+      "warranty": "24h",
+      "credentials": "val_prime_player#EU1:RiotPassword2026!",
+      "sellerId": "u_ask_admin",
+      "sellerName": "ask",
+      "sellerAvatar": "",
+      "sellerColor": "#3b9add",
+      "status": "active",
+      "buyerId": null,
+      "buyerName": null,
+      "boughtAt": null,
+      "views": 180,
+      "createdAt": 1791222516613
+    },
+    {
+      "id": "mkt_ccc948b5ef4d",
+      "title": "Minecraft | Java & Bedrock Edition | Лицензия + Плащ Миграции",
+      "category": "other",
+      "price": 390,
+      "description": "Официальная лицензия Microsoft с полным доступом к Minecraft Java & Bedrock. Без банов на Hypixel и популярных серверах. Красивый никнейм и плащ мигратора.",
+      "origin": "resale",
+      "warranty": "24h",
+      "credentials": "mc_legend_craft@outlook.com:CraftPass2026",
+      "sellerId": "u_ask_admin",
+      "sellerName": "ask",
+      "sellerAvatar": "",
+      "sellerColor": "#3b9add",
+      "status": "active",
+      "buyerId": null,
+      "buyerName": null,
+      "boughtAt": null,
+      "views": 110,
+      "createdAt": 1791136116613
     }
   ]
 }

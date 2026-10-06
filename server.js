@@ -43,6 +43,7 @@ function publicUser(u) {
     prefix: u.prefix || null,
     banned: !!u.banned,
     postingRestrictedUntil: u.postingRestrictedUntil || null,
+    balance: typeof u.balance === 'number' ? u.balance : 2500,
   };
 }
 
@@ -142,6 +143,135 @@ function seed() {
   };
 }
 
+function getInitialMarketItems() {
+  const now = Date.now();
+  const day = 86400000;
+  const admin = (db && db.users ? db.users.find((u) => u.username === 'ask') : null) || { id: 'u_ask', username: 'ask', avatarColor: '#3b9add' };
+
+  return [
+    {
+      id: uid('mkt'),
+      title: 'Steam | CS2 Prime (15 медалей) + Инвентарь 3,850 ₽ | 1,450 ч. | Родная почта',
+      category: 'cs2',
+      price: 690,
+      description: 'Личный аккаунт Steam. CS2 Prime статус, выслуга 7 лет, инвентарь на 3850 руб (АК-47 Ледяной уголь, AWP Древесная гадюка, глок и др.). Без VAC и привязок. Родная почта и первый чек в комплекте.',
+      origin: 'personal',
+      warranty: '24h',
+      credentials: 'cs2_pro_player:SuperSecretPass2026! | Почта: cs2_first_mail@rambler.ru:RamblerPass99 | R-код: R12345',
+      sellerId: admin.id,
+      sellerName: admin.username,
+      sellerAvatar: admin.avatar || '',
+      sellerColor: admin.avatarColor || '#3b9add',
+      status: 'active',
+      buyerId: null,
+      buyerName: null,
+      boughtAt: null,
+      views: 148,
+      createdAt: now - 3 * 3600000,
+    },
+    {
+      id: uid('mkt'),
+      title: 'Telegram | Аккаунт с Premium на 6 месяцев + Канал 1.8k подписчиков',
+      category: 'telegram',
+      price: 420,
+      description: 'Чистый аккаунт Telegram, зарегистрирован 1.5 года назад (отлежка). Подписка Telegram Premium активна еще 6 месяцев. Владелец канала на 1800 живых подписчиков без спамблока.',
+      origin: 'personal',
+      warranty: '24h',
+      credentials: '+79991234567 | 2FA пароль: TgSecretPass2026 | Tdata / Session string в архиве',
+      sellerId: admin.id,
+      sellerName: admin.username,
+      sellerAvatar: admin.avatar || '',
+      sellerColor: admin.avatarColor || '#3b9add',
+      status: 'active',
+      buyerId: null,
+      buyerName: null,
+      boughtAt: null,
+      views: 94,
+      createdAt: now - 5 * 3600000,
+    },
+    {
+      id: uid('mkt'),
+      title: 'Discord | Подписка Nitro Boost 1 год + Значок Early Supporter',
+      category: 'discord',
+      price: 850,
+      description: 'Discord аккаунт с регистрацией в 2018 году, значок Early Supporter. Активная подписка Nitro на 1 год без слета. 2 сервера с бустами 3 уровня.',
+      origin: 'resale',
+      warranty: '12h',
+      credentials: 'discord_vip_user@gmail.com:DiscordPass999 | Токен: mfa.a9sd8fa8sdf7a6sd5f_secure_token',
+      sellerId: admin.id,
+      sellerName: admin.username,
+      sellerAvatar: admin.avatar || '',
+      sellerColor: admin.avatarColor || '#3b9add',
+      status: 'active',
+      buyerId: null,
+      buyerName: null,
+      boughtAt: null,
+      views: 215,
+      createdAt: now - 8 * 3600000,
+    },
+    {
+      id: uid('mkt'),
+      title: 'Epic Games | GTA V Premium + Cyberpunk 2077 + RDR2 + 55 раздач',
+      category: 'epic',
+      price: 550,
+      description: 'Аккаунт Epic Games с купленными GTA 5 (чистый онлайн без банов), Cyberpunk 2077, Red Dead Redemption 2 и более 55 топовых игр. Смена почты доступна моментально.',
+      origin: 'personal',
+      warranty: '24h',
+      credentials: 'epic_gamer2026@rambler.ru:EpicMasterKey123',
+      sellerId: admin.id,
+      sellerName: admin.username,
+      sellerAvatar: admin.avatar || '',
+      sellerColor: admin.avatarColor || '#3b9add',
+      status: 'active',
+      buyerId: null,
+      buyerName: null,
+      boughtAt: null,
+      views: 68,
+      createdAt: now - 12 * 3600000,
+    },
+    {
+      id: uid('mkt'),
+      title: 'Valorant | Vandal Prime + Phantom Ion + Нож Reaver | Ранг: Платина 2',
+      category: 'valorant',
+      price: 1200,
+      description: 'Личный аккаунт Valorant регион EU. Скины: Vandal Prime (все расцветки), Phantom Ion, Керамбит Reaver. Полный доступ со сменой почты, доступен соревновательный режим.',
+      origin: 'personal',
+      warranty: '24h',
+      credentials: 'val_prime_player#EU1:RiotPassword2026!',
+      sellerId: admin.id,
+      sellerName: admin.username,
+      sellerAvatar: admin.avatar || '',
+      sellerColor: admin.avatarColor || '#3b9add',
+      status: 'active',
+      buyerId: null,
+      buyerName: null,
+      boughtAt: null,
+      views: 180,
+      createdAt: now - 1 * day,
+    },
+    {
+      id: uid('mkt'),
+      title: 'Minecraft | Java & Bedrock Edition | Лицензия + Плащ Миграции',
+      category: 'other',
+      price: 390,
+      description: 'Официальная лицензия Microsoft с полным доступом к Minecraft Java & Bedrock. Без банов на Hypixel и популярных серверах. Красивый никнейм и плащ мигратора.',
+      origin: 'resale',
+      warranty: '24h',
+      credentials: 'mc_legend_craft@outlook.com:CraftPass2026',
+      sellerId: admin.id,
+      sellerName: admin.username,
+      sellerAvatar: admin.avatar || '',
+      sellerColor: admin.avatarColor || '#3b9add',
+      status: 'active',
+      buyerId: null,
+      buyerName: null,
+      boughtAt: null,
+      views: 110,
+      createdAt: now - 2 * day,
+    },
+  ];
+}
+
 function load() {
   try {
     if (fs.existsSync(DATA_FILE)) {
@@ -155,7 +285,16 @@ function load() {
         { id: 'helper', name: 'Помощник', color: '#2ecc71', price: 250, grantable: true },
         { id: 'vip', name: 'VIP', color: '#e67e22', price: 500, grantable: true },
       ];
-      db.users.forEach((u) => { u.role ||= 'user'; u.balance ||= 0; u.postsCount ||= 0; u.likesReceived ||= 0; });
+      db.market ||= [];
+      if (!db.market.length) {
+        db.market = getInitialMarketItems();
+      }
+      db.users.forEach((u) => {
+        u.role ||= 'user';
+        if (typeof u.balance !== 'number' || u.balance < 500) u.balance = 2500;
+        u.postsCount ||= 0;
+        u.likesReceived ||= 0;
+      });
       db.posts.forEach((p) => { p.status ||= 'approved'; });
       db.threads.forEach((t) => { if (t.postsCount === 0) t.postsCount = db.posts.filter((p) => p.threadId === t.id && p.status === 'approved').length; });
       return;
@@ -164,6 +303,7 @@ function load() {
     console.error('DB повреждена, пересоздаю:', e.message);
   }
   db = seed();
+  db.market = getInitialMarketItems();
   save();
 }
 
@@ -188,6 +328,9 @@ function authOptional(req, _res, next) {
     try {
       const payload = jwt.verify(token, JWT_SECRET);
       req.user = db.users.find((u) => u.id === payload.id) || null;
+      if (req.user && typeof req.user.balance !== 'number') {
+        req.user.balance = 2500;
+      }
     } catch { req.user = null; }
   }
   next();
@@ -527,6 +670,7 @@ app.post('/api/register', (req, res) => {
     passwordHash: bcrypt.hashSync(password, 10),
     role: 'user', avatarColor: pickColor(name),
     createdAt: Date.now(), postsCount: 0, likesReceived: 0,
+    balance: 2500,
   };
   db.users.push(user);
   invite.usedCount += 1;
@@ -714,6 +858,239 @@ app.delete('/api/admin/posts/:id', moderationRequired, (req, res) => {
     thread.lastBy = last?.authorName || thread.authorName;
   }
   save(); res.json({ ok: true });
+});
+
+// ==========================================
+// МАРКЕТПЛЕЙС (LZT Market style)
+// ==========================================
+
+function formatMarketItem(item, reqUser) {
+  const seller = db.users.find((u) => u.id === item.sellerId);
+  const canSeeCredentials = !!reqUser && (item.buyerId === reqUser.id || item.sellerId === reqUser.id || reqUser.role === 'admin');
+
+  return {
+    id: item.id,
+    title: item.title,
+    category: item.category,
+    price: item.price,
+    description: item.description,
+    origin: item.origin,
+    warranty: item.warranty,
+    status: item.status, // 'active' | 'sold' | 'removed'
+    sellerId: item.sellerId,
+    sellerName: item.sellerName,
+    sellerAvatar: seller?.avatar || item.sellerAvatar || '',
+    sellerColor: seller?.avatarColor || item.sellerColor || '#3b9add',
+    sellerRole: seller?.role || 'user',
+    buyerId: item.buyerId,
+    buyerName: item.buyerName,
+    boughtAt: item.boughtAt,
+    views: item.views || 0,
+    createdAt: item.createdAt,
+    credentials: canSeeCredentials ? item.credentials : undefined,
+    hasPurchased: !!reqUser && item.buyerId === reqUser.id,
+    isOwner: !!reqUser && item.sellerId === reqUser.id,
+  };
+}
+
+// Список товаров маркета с фильтрацией и поиском
+app.get('/api/market', authOptional, (req, res) => {
+  const {
+    category = 'all',
+    q = '',
+    origin = 'all',
+    warranty = 'all',
+    minPrice,
+    maxPrice,
+    sort = 'new',
+    tab = 'all',
+  } = req.query;
+
+  let items = [...(db.market || [])];
+
+  // Вкладки
+  if (tab === 'my_items') {
+    if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт' });
+    items = items.filter((x) => x.sellerId === req.user.id);
+  } else if (tab === 'my_purchases') {
+    if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт' });
+    items = items.filter((x) => x.buyerId === req.user.id);
+  } else {
+    items = items.filter((x) => x.status === 'active' || x.status === 'sold');
+  }
+
+  // Фильтр по категории
+  if (category && category !== 'all') {
+    items = items.filter((x) => x.category.toLowerCase() === category.toLowerCase());
+  }
+
+  // Фильтр по происхождению
+  if (origin && origin !== 'all') {
+    items = items.filter((x) => x.origin.toLowerCase() === origin.toLowerCase());
+  }
+
+  // Фильтр по гарантии
+  if (warranty && warranty !== 'all') {
+    items = items.filter((x) => x.warranty.toLowerCase() === warranty.toLowerCase());
+  }
+
+  // Поиск по ключевым словам
+  if (q && q.trim()) {
+    const query = q.trim().toLowerCase();
+    items = items.filter((x) =>
+      x.title.toLowerCase().includes(query) ||
+      (x.description && x.description.toLowerCase().includes(query)) ||
+      x.category.toLowerCase().includes(query)
+    );
+  }
+
+  // Диапазон цен
+  const min = parseFloat(minPrice);
+  const max = parseFloat(maxPrice);
+  if (!isNaN(min)) items = items.filter((x) => x.price >= min);
+  if (!isNaN(max)) items = items.filter((x) => x.price <= max);
+
+  // Сортировка
+  if (sort === 'cheap') {
+    items.sort((a, b) => a.price - b.price);
+  } else if (sort === 'expensive') {
+    items.sort((a, b) => b.price - a.price);
+  } else if (sort === 'views') {
+    items.sort((a, b) => (b.views || 0) - (a.views || 0));
+  } else {
+    items.sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  res.json(items.map((item) => formatMarketItem(item, req.user)));
+});
+
+// Просмотр одного товара маркета
+app.get('/api/market/:id', authOptional, (req, res) => {
+  const item = (db.market || []).find((x) => x.id === req.params.id);
+  if (!item) return res.status(404).json({ error: 'Товар не найден' });
+  item.views = (item.views || 0) + 1;
+  save();
+  res.json(formatMarketItem(item, req.user));
+});
+
+// Выставление аккаунта на продажу
+app.post('/api/market', authRequired, postingAllowed, (req, res) => {
+  const {
+    title = '',
+    category = 'other',
+    price,
+    description = '',
+    origin = 'resale',
+    warranty = '24h',
+    credentials = '',
+  } = req.body;
+
+  const t = title.trim();
+  if (t.length < 5) return res.status(400).json({ error: 'Заголовок должен содержать минимум 5 символов' });
+  if (t.length > 160) return res.status(400).json({ error: 'Слишком длинный заголовок (максимум 160 символов)' });
+
+  const p = Math.round(Number(price));
+  if (isNaN(p) || p < 10) return res.status(400).json({ error: 'Минимальная цена — 10 ₽' });
+  if (p > 1000000) return res.status(400).json({ error: 'Максимальная цена — 1 000 000 ₽' });
+
+  const creds = String(credentials || '').trim();
+  if (creds.length < 3) return res.status(400).json({ error: 'Укажите данные для покупателя (логин:пароль, почту, токен)' });
+
+  const validCategories = ['steam', 'cs2', 'telegram', 'discord', 'epic', 'valorant', 'fortnite', 'genshin', 'services', 'other'];
+  const cat = validCategories.includes(category) ? category : 'other';
+
+  const validOrigins = ['personal', 'resale', 'autoreg', 'brute', 'phishing', 'stealer'];
+  const orig = validOrigins.includes(origin) ? origin : 'resale';
+
+  const validWarranties = ['none', '12h', '24h', '3d'];
+  const war = validWarranties.includes(warranty) ? warranty : '24h';
+
+  const newItem = {
+    id: uid('mkt'),
+    title: t,
+    category: cat,
+    price: p,
+    description: String(description || '').trim().slice(0, 5000),
+    origin: orig,
+    warranty: war,
+    credentials: creds.slice(0, 3000),
+    sellerId: req.user.id,
+    sellerName: req.user.username,
+    sellerAvatar: req.user.avatar || '',
+    sellerColor: req.user.avatarColor || '#3b9add',
+    status: 'active',
+    buyerId: null,
+    buyerName: null,
+    boughtAt: null,
+    views: 1,
+    createdAt: Date.now(),
+  };
+
+  db.market ||= [];
+  db.market.unshift(newItem);
+  save();
+
+  res.json(formatMarketItem(newItem, req.user));
+});
+
+// Покупка аккаунта
+app.post('/api/market/:id/buy', authRequired, (req, res) => {
+  const item = (db.market || []).find((x) => x.id === req.params.id);
+  if (!item) return res.status(404).json({ error: 'Товар не найден' });
+  if (item.status !== 'active') return res.status(400).json({ error: 'Этот товар уже продан или снят с продажи' });
+  if (item.sellerId === req.user.id) return res.status(400).json({ error: 'Нельзя купить собственный товар' });
+
+  const buyer = req.user;
+  buyer.balance = typeof buyer.balance === 'number' ? buyer.balance : 2500;
+
+  if (buyer.balance < item.price) {
+    return res.status(400).json({
+      error: `Недостаточно средств. Требуется: ${item.price} ₽, на вашем балансе: ${buyer.balance} ₽.`,
+      needDeposit: item.price - buyer.balance,
+    });
+  }
+
+  // Перевод баланса
+  buyer.balance -= item.price;
+  const seller = db.users.find((u) => u.id === item.sellerId);
+  if (seller) {
+    seller.balance = (seller.balance || 0) + item.price;
+  }
+
+  item.status = 'sold';
+  item.buyerId = buyer.id;
+  item.buyerName = buyer.username;
+  item.boughtAt = Date.now();
+
+  save();
+
+  res.json({
+    success: true,
+    message: 'Аккаунт успешно куплен! Данные для входа доступны ниже.',
+    item: formatMarketItem(item, buyer),
+    newBalance: buyer.balance,
+  });
+});
+
+// Удаление товара (продавец или админ)
+app.delete('/api/market/:id', authRequired, (req, res) => {
+  const item = (db.market || []).find((x) => x.id === req.params.id);
+  if (!item) return res.status(404).json({ error: 'Товар не найден' });
+  if (item.sellerId !== req.user.id && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'У вас нет прав для удаления этого товара' });
+  }
+
+  item.status = 'removed';
+  save();
+  res.json({ ok: true });
+});
+
+// Пополнение тестового баланса
+app.post('/api/market/deposit', authRequired, (req, res) => {
+  const amount = Math.min(100000, Math.max(10, Math.round(Number(req.body.amount) || 500)));
+  req.user.balance = (typeof req.user.balance === 'number' ? req.user.balance : 0) + amount;
+  save();
+  res.json({ success: true, balance: req.user.balance });
 });
 
 // SPA fallback

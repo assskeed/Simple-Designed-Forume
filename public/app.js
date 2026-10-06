@@ -160,6 +160,10 @@ function renderUserbox() {
     $('#navMessages').style.display = '';
     $('#navModeration').style.display = ['admin', 'moderator'].includes(store.user.role) ? '' : 'none';
     box.innerHTML = `
+      <button class="user-balance-pill" onclick="openDepositModal()" title="Баланс маркета · Нажмите для пополнения">
+        <span class="user-balance-icon">₽</span>
+        <span>${store.user.balance || 0} ₽</span>
+      </button>
       <a href="#/profile" class="userbox-profile" title="Открыть профиль">
         ${avatar(store.user.username, store.user.avatarColor, store.user)}
         <span class="userbox-profile-text"><b>${esc(store.user.username)}</b>${roleBadge(store.user.role)}</span>
@@ -220,6 +224,8 @@ async function router() {
 
   try {
     if (!route) await viewHome();
+    else if (route === 'market') await viewMarket(id);
+    else if (route === 'forum' && id === 'market') { location.hash = '#/market'; return; }
     else if (route === 'forum') await viewForum(id);
     else if (route === 'thread') await viewThread(id);
     else if (route === 'members') await viewMembers();
@@ -285,7 +291,10 @@ async function viewHome() {
               ${getForumIconSvg(f.id, f.name)}
             </div>
             <div class="forum-node-main">
-              <a href="#/forum/${f.id}" class="forum-node-title">${esc(f.name)}</a>
+              <a href="${f.id === 'market' ? '#/market' : `#/forum/${f.id}`}" class="forum-node-title">
+                ${esc(f.name)}
+                ${f.id === 'market' ? '<span class="label-prefix label-prefix--cyan" style="margin-left:8px; font-size:10.5px">LZT Маркет</span>' : ''}
+              </a>
               <div class="forum-node-desc">${esc(f.description || '')}</div>
               <div class="forum-node-stats-mobile">
                 <span>Темы: <b>${f.threads}</b></span> · <span>Сообщения: <b>${f.messages}</b></span>
@@ -358,6 +367,10 @@ async function viewHome() {
           <a href="#/" class="subnav-link active">
             <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L8.354 1.146z"/></svg>
             Разделы форума
+          </a>
+          <a href="#/market" class="subnav-link">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+            Маркет
           </a>
           <a href="#/forum/news" class="subnav-link">
             <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M12 4v16l-5-4H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h3l5-4zm2 2.5a6 6 0 0 1 0 11v-2a4 4 0 0 0 0-7v-2zm3-3a9 9 0 0 1 0 17v-2a7 7 0 0 0 0-13V3.5z"/></svg>
@@ -1070,6 +1083,788 @@ $('#globalSearch').addEventListener('input', (e) => {
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.top-search')) $('#searchResults').style.display = 'none';
 });
+
+// ==========================================
+// МАРКЕТПЛЕЙС (LZT Market style)
+// ==========================================
+
+const MARKET_PLATFORMS = [
+  { id: 'all', name: 'Все товары', icon: '🌐' },
+  { id: 'cs2', name: 'CS 2', icon: '🎯' },
+  { id: 'steam', name: 'Steam', icon: '💨' },
+  { id: 'telegram', name: 'Telegram', icon: '✈️' },
+  { id: 'discord', name: 'Discord', icon: '🎮' },
+  { id: 'epic', name: 'Epic Games', icon: '⚡' },
+  { id: 'valorant', name: 'Valorant', icon: '🗡️' },
+  { id: 'fortnite', name: 'Fortnite', icon: '🦹' },
+  { id: 'genshin', name: 'Genshin', icon: '✨' },
+  { id: 'other', name: 'Minecraft / Другое', icon: '🧱' },
+  { id: 'services', name: 'Услуги и софт', icon: '🛠️' },
+];
+
+const MARKET_ORIGINS = {
+  personal: { label: 'Личный', cls: 'origin-personal' },
+  resale: { label: 'Перепродажа', cls: 'origin-resale' },
+  autoreg: { label: 'Авторег', cls: 'origin-autoreg' },
+  brute: { label: 'Брут', cls: 'origin-brute' },
+  phishing: { label: 'Фишинг', cls: 'origin-phishing' },
+  stealer: { label: 'Стиллер', cls: 'origin-stealer' },
+};
+
+const MARKET_WARRANTIES = {
+  none: 'На момент покупки',
+  '12h': '12 часов гарантии',
+  '24h': '24 часа гарантии',
+  '3d': '3 дня гарантии',
+};
+
+function getMarketPlatformSvg(cat) {
+  const c = (cat || '').toLowerCase();
+  if (c === 'cs2') return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M11 2a1 1 0 0 1 2 0v2.06c4.07.47 7.47 3.87 7.94 7.94H23a1 1 0 1 1 0 2h-2.06c-.47 4.07-3.87 7.47-7.94 7.94V24a1 1 0 1 1-2 0v-2.06c-4.07-.47-7.47-3.87-7.94-7.94H1a1 1 0 1 1 0-2h2.06c.47-4.07 3.87-7.47 7.94-7.94V2zm0 4.08C7.62 6.54 4.54 9.62 4.08 13c.46 3.38 3.54 6.46 6.92 6.92V17a1 1 0 1 1 2 0v2.92c3.38-.46 6.46-3.54 6.92-6.92H17a1 1 0 1 1 0-2h2.92C19.46 7.62 16.38 4.54 13 4.08V7a1 1 0 1 1-2 0V4.08zM12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" clip-rule="evenodd"/></svg>`;
+  if (c === 'steam') return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.005.105.005.159 0 1.848-1.503 3.351-3.351 3.351-1.604 0-2.952-1.135-3.284-2.646L.38 15.02C1.758 20.198 6.442 24 11.979 24c6.627 0 12-5.373 12-12S18.605 0 11.979 0z"/></svg>`;
+  if (c === 'telegram') return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.37.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06-.01.19-.04.38z"/></svg>`;
+  if (c === 'discord') return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>`;
+  if (c === 'epic') return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l8 4.5v11L12 22 4 17.5v-11L12 2zm0 3.3L6.5 8.4v7.2L12 18.7l5.5-3.1V8.4L12 5.3zm-1 3.7h2v6h-2V9z"/></svg>`;
+  if (c === 'valorant') return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M2.2 4l9.8 16 9.8-16h-4.9L12 12.1 7.1 4H2.2z"/></svg>`;
+  if (c === 'fortnite') return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 2v20l5-4V2H7zm6 0v14l4-3.2V2h-4z"/></svg>`;
+  if (c === 'genshin') return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l2.6 6.8L22 12l-7.4 3.2L12 22l-2.6-6.8L2 12l7.4-3.2L12 2z"/></svg>`;
+  if (c === 'other') return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l9 5.2v9.6L12 22l-9-5.2V7.2L12 2zm0 2.3L4.8 8.4 12 12.6l7.2-4.2L12 4.3zM4 10.1v6.7l7 4v-6.7l-7-4zm16 0l-7 4v6.7l7-4v-6.7z"/></svg>`;
+  return `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.6-1.4 2.5c-.2.3-.2.6-.2 1 0 1.1.9 2 2 2h12v-2H7.4l.9-1.6h7.5c.8 0 1.4-.4 1.7-1l3.6-6.5c.1-.2.2-.4.2-.6 0-.6-.4-1-1-1H5.2L4.3 2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>`;
+}
+
+let marketFilterState = {
+  category: 'all',
+  q: '',
+  origin: 'all',
+  warranty: 'all',
+  minPrice: '',
+  maxPrice: '',
+  sort: 'new',
+  tab: 'all',
+};
+
+function closeMarketModal() {
+  const m = document.querySelector('.market-modal-backdrop');
+  if (m) m.remove();
+}
+
+function copyMarketText(text, btn) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = 'Скопировано! ✓';
+    btn.classList.add('success');
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.classList.remove('success');
+    }, 2000);
+  }
+}
+
+async function viewMarket(id) {
+  document.querySelector('[data-nav="market"]')?.classList.add('active');
+  if (id && id !== 'catalog') {
+    await viewMarketItem(id);
+  } else {
+    await viewMarketCatalog();
+  }
+}
+
+async function viewMarketCatalog() {
+  app.innerHTML = '<div class="muted" style="padding:20px">Загрузка маркета...</div>';
+  try {
+    const params = new URLSearchParams();
+    if (marketFilterState.category !== 'all') params.set('category', marketFilterState.category);
+    if (marketFilterState.q) params.set('q', marketFilterState.q);
+    if (marketFilterState.origin !== 'all') params.set('origin', marketFilterState.origin);
+    if (marketFilterState.warranty !== 'all') params.set('warranty', marketFilterState.warranty);
+    if (marketFilterState.minPrice) params.set('minPrice', marketFilterState.minPrice);
+    if (marketFilterState.maxPrice) params.set('maxPrice', marketFilterState.maxPrice);
+    if (marketFilterState.sort) params.set('sort', marketFilterState.sort);
+    if (marketFilterState.tab !== 'all') params.set('tab', marketFilterState.tab);
+
+    const items = await api(`/api/market?${params.toString()}`);
+
+    // Платформы (верхние фильтры)
+    const platformChipsHtml = MARKET_PLATFORMS.map((p) => {
+      const active = marketFilterState.category === p.id ? 'active' : '';
+      return `
+        <div class="platform-chip ${active}" onclick="setMarketCategory('${p.id}')">
+          <span class="platform-chip-icon">${getMarketPlatformSvg(p.id)}</span>
+          <span>${esc(p.name)}</span>
+        </div>`;
+    }).join('');
+
+    // Карточки товаров
+    const itemsHtml = items.length ? items.map((item) => {
+      const orig = MARKET_ORIGINS[item.origin] || { label: item.origin, cls: 'origin-resale' };
+      const warText = MARKET_WARRANTIES[item.warranty] || 'Гарантия';
+      const isSold = item.status === 'sold';
+
+      let actionBtn = '';
+      if (isSold) {
+        if (item.hasPurchased) {
+          actionBtn = `<button class="btn small success" onclick="event.stopPropagation(); viewMarketItem('${item.id}')">🔑 Куплено</button>`;
+        } else {
+          actionBtn = `<span class="badge closed" style="margin:0">Куплен</span>`;
+        }
+      } else {
+        if (item.isOwner) {
+          actionBtn = `<span class="badge user" style="margin:0">Ваш лот</span>`;
+        } else {
+          actionBtn = `<button class="btn small primary market-buy-btn" onclick="event.stopPropagation(); openBuyModal('${item.id}')">Купить</button>`;
+        }
+      }
+
+      return `
+        <div class="market-card" onclick="location.hash='#/market/${item.id}'" style="cursor:pointer">
+          <div class="market-card-head">
+            <span class="market-platform-tag">
+              <span style="color:var(--accent-bright)">${getMarketPlatformSvg(item.category)}</span>
+              <span>${esc(item.category)}</span>
+            </span>
+            <div class="market-badges-cluster">
+              <span class="badge-origin ${orig.cls}">${esc(orig.label)}</span>
+              <span class="badge-warranty" title="Гарантия">🛡️ ${esc(warText.replace(' гарантии', ''))}</span>
+              ${isSold ? '<span class="badge closed" style="margin:0">Продан</span>' : ''}
+            </div>
+          </div>
+          <div class="market-card-body">
+            <a href="#/market/${item.id}" class="market-card-title" onclick="event.stopPropagation()">${esc(item.title)}</a>
+            <div class="market-card-desc-snippet">${esc(item.description || 'Без дополнительного описания')}</div>
+            <div class="market-seller-meta">
+              ${avatar(item.sellerName, item.sellerColor, { avatar: item.sellerAvatar })}
+              <span>${esc(item.sellerName)}</span>
+              <span class="muted">· ${timeAgo(item.createdAt)}</span>
+              <span class="muted" style="margin-left:auto">👁 ${item.views}</span>
+            </div>
+          </div>
+          <div class="market-card-foot">
+            <div class="market-card-price">${item.price} ₽</div>
+            <div class="market-card-actions" onclick="event.stopPropagation()">
+              ${actionBtn}
+              <a href="#/market/${item.id}" class="btn small ghost">Инфо</a>
+            </div>
+          </div>
+        </div>`;
+    }).join('') : `
+      <div class="card" style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted)">
+        <div style="font-size: 38px; margin-bottom: 10px">🔍</div>
+        <div style="font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px">Товаров не найдено</div>
+        <div>Попробуйте изменить параметры поиска или выберите другую категорию.</div>
+        <div style="margin-top: 16px">
+          <button class="btn ghost small" onclick="resetMarketFilters()">Сбросить фильтры</button>
+          ${store.user ? '<button class="btn small primary" onclick="openSellModal()" style="margin-left:8px">+ Продать аккаунт</button>' : ''}
+        </div>
+      </div>`;
+
+    app.innerHTML = `
+      <div class="market-page">
+        <!-- Полоса платформ в стиле LZT -->
+        <div class="market-platforms-scroll">
+          ${platformChipsHtml}
+        </div>
+
+        <!-- Верхняя панель управления и табов -->
+        <div class="market-toolbar">
+          <div class="market-tabs">
+            <div class="market-tab ${marketFilterState.tab === 'all' ? 'active' : ''}" onclick="setMarketTab('all')">
+              Каталог товаров
+            </div>
+            ${store.user ? `
+              <div class="market-tab ${marketFilterState.tab === 'my_items' ? 'active' : ''}" onclick="setMarketTab('my_items')">
+                Мои объявления
+              </div>
+              <div class="market-tab ${marketFilterState.tab === 'my_purchases' ? 'active' : ''}" onclick="setMarketTab('my_purchases')">
+                Мои покупки
+              </div>
+            ` : ''}
+          </div>
+          <div class="market-toolbar-actions">
+            ${store.user ? `
+              <button class="user-balance-pill" onclick="openDepositModal()" title="Нажмите для пополнения">
+                <span class="user-balance-icon">₽</span>
+                <span>Баланс: <b>${store.user.balance || 0} ₽</b></span>
+                <span style="font-size:11px;opacity:0.8">+</span>
+              </button>
+              <button class="btn-sell-market" onclick="openSellModal()">
+                <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2z"/></svg>
+                Продать аккаунт
+              </button>
+            ` : `
+              <a href="#/login" class="btn small ghost">Войдите для покупок и продаж</a>
+            `}
+          </div>
+        </div>
+
+        <!-- Фильтры и поиск LZT -->
+        <div class="market-filters">
+          <div class="market-search-row">
+            <div class="market-search-input-wrap">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+              <input class="market-search-input" id="mktSearch" placeholder="Поиск по названию или описанию..." value="${esc(marketFilterState.q)}">
+            </div>
+            <button class="btn small" onclick="applyMarketSearch()">Найти</button>
+            <button class="btn ghost small" onclick="resetMarketFilters()">Сброс</button>
+          </div>
+
+          <div class="market-filter-row">
+            <div class="market-filter-group">
+              <span>Цена:</span>
+              <input class="market-price-input" id="mktMin" type="number" placeholder="От ₽" value="${esc(marketFilterState.minPrice)}">
+              <span>—</span>
+              <input class="market-price-input" id="mktMax" type="number" placeholder="До ₽" value="${esc(marketFilterState.maxPrice)}">
+            </div>
+
+            <div class="market-filter-group">
+              <span>Происхождение:</span>
+              <select id="mktOrigin" onchange="marketFilterState.origin=this.value; viewMarketCatalog();">
+                <option value="all" ${marketFilterState.origin === 'all' ? 'selected' : ''}>Любое</option>
+                <option value="personal" ${marketFilterState.origin === 'personal' ? 'selected' : ''}>Личный</option>
+                <option value="resale" ${marketFilterState.origin === 'resale' ? 'selected' : ''}>Перепродажа</option>
+                <option value="autoreg" ${marketFilterState.origin === 'autoreg' ? 'selected' : ''}>Авторег</option>
+                <option value="brute" ${marketFilterState.origin === 'brute' ? 'selected' : ''}>Брут</option>
+                <option value="phishing" ${marketFilterState.origin === 'phishing' ? 'selected' : ''}>Фишинг</option>
+                <option value="stealer" ${marketFilterState.origin === 'stealer' ? 'selected' : ''}>Стиллер</option>
+              </select>
+            </div>
+
+            <div class="market-filter-group">
+              <span>Гарантия:</span>
+              <select id="mktWarranty" onchange="marketFilterState.warranty=this.value; viewMarketCatalog();">
+                <option value="all" ${marketFilterState.warranty === 'all' ? 'selected' : ''}>Любая</option>
+                <option value="24h" ${marketFilterState.warranty === '24h' ? 'selected' : ''}>24 часа</option>
+                <option value="12h" ${marketFilterState.warranty === '12h' ? 'selected' : ''}>12 часов</option>
+                <option value="3d" ${marketFilterState.warranty === '3d' ? 'selected' : ''}>3 дня</option>
+                <option value="none" ${marketFilterState.warranty === 'none' ? 'selected' : ''}>На момент покупки</option>
+              </select>
+            </div>
+
+            <div class="market-filter-group" style="margin-left:auto">
+              <span>Сортировка:</span>
+              <select id="mktSort" onchange="marketFilterState.sort=this.value; viewMarketCatalog();">
+                <option value="new" ${marketFilterState.sort === 'new' ? 'selected' : ''}>Сначала новые</option>
+                <option value="cheap" ${marketFilterState.sort === 'cheap' ? 'selected' : ''}>Сначала дешевые</option>
+                <option value="expensive" ${marketFilterState.sort === 'expensive' ? 'selected' : ''}>Сначала дорогие</option>
+                <option value="views" ${marketFilterState.sort === 'views' ? 'selected' : ''}>По просмотрам</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Сетка товаров -->
+        <div class="market-grid">
+          ${itemsHtml}
+        </div>
+      </div>`;
+
+    // Event listeners
+    $('#mktSearch')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') applyMarketSearch();
+    });
+    $('#mktMin')?.addEventListener('change', (e) => {
+      marketFilterState.minPrice = e.target.value;
+      viewMarketCatalog();
+    });
+    $('#mktMax')?.addEventListener('change', (e) => {
+      marketFilterState.maxPrice = e.target.value;
+      viewMarketCatalog();
+    });
+  } catch (err) {
+    app.innerHTML = `<div class="alert">${esc(err.message)}</div>`;
+  }
+}
+
+function setMarketCategory(catId) {
+  marketFilterState.category = catId;
+  viewMarketCatalog();
+}
+
+function setMarketTab(tabId) {
+  marketFilterState.tab = tabId;
+  viewMarketCatalog();
+}
+
+function applyMarketSearch() {
+  marketFilterState.q = $('#mktSearch')?.value.trim() || '';
+  viewMarketCatalog();
+}
+
+function resetMarketFilters() {
+  marketFilterState = {
+    category: 'all',
+    q: '',
+    origin: 'all',
+    warranty: 'all',
+    minPrice: '',
+    maxPrice: '',
+    sort: 'new',
+    tab: 'all',
+  };
+  viewMarketCatalog();
+}
+
+// Просмотр отдельного товара маркета
+async function viewMarketItem(itemId) {
+  app.innerHTML = '<div class="muted" style="padding:20px">Загрузка объявления...</div>';
+  try {
+    const item = await api(`/api/market/${itemId}`);
+    const orig = MARKET_ORIGINS[item.origin] || { label: item.origin, cls: 'origin-resale' };
+    const warText = MARKET_WARRANTIES[item.warranty] || 'Гарантия';
+    const isSold = item.status === 'sold';
+
+    let unlockedBox = '';
+    if (item.credentials) {
+      unlockedBox = `
+        <div class="market-unlocked-box">
+          <div class="market-unlocked-head">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
+            <span>Данные для входа в аккаунт (выданы после покупки):</span>
+          </div>
+          <pre class="market-creds-pre" id="itemCreds">${esc(item.credentials)}</pre>
+          <div style="margin-top: 10px; display:flex; gap:10px; align-items:center">
+            <button class="btn small success" onclick="copyMarketText($('#itemCreds').textContent, this)">Копировать данные</button>
+            <span class="muted" style="font-size:12px">${item.boughtAt ? 'Куплено: ' + fmtDate(item.boughtAt) : ''}</span>
+          </div>
+        </div>`;
+    }
+
+    let buyActionHtml = '';
+    if (isSold) {
+      buyActionHtml = item.hasPurchased
+        ? '<div class="notice" style="margin:0">✅ Вы приобрели этот товар. Данные отображены выше.</div>'
+        : '<div class="alert" style="margin:0; background:rgba(100,116,139,0.1); border-color:rgba(100,116,139,0.3); color:#94a3b8">Товар уже продан другому покупателю.</div>';
+    } else {
+      if (item.isOwner) {
+        buyActionHtml = `
+          <div style="display:flex; gap:10px; align-items:center">
+            <span class="badge user" style="margin:0">Ваше объявление</span>
+            <button class="btn danger small" onclick="deleteMarketItem('${item.id}')">Снять с продажи</button>
+          </div>`;
+      } else {
+        buyActionHtml = `
+          <button class="btn primary" style="width:100%; font-size:15px; padding:12px; font-weight:700" onclick="openBuyModal('${item.id}')">
+            Купить аккаунт за ${item.price} ₽
+          </button>`;
+      }
+    }
+
+    app.innerHTML = `
+      <div>
+        <div class="crumb">
+          <a href="#/market">Маркет</a> / 
+          <a href="#/market" onclick="setMarketCategory('${item.category}')">${esc(item.category.toUpperCase())}</a> / 
+          <span style="color:#fff">${esc(item.title)}</span>
+        </div>
+
+        ${unlockedBox}
+
+        <div style="display:grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items:start">
+          <!-- Левая колонка: описание и детали -->
+          <div class="card">
+            <div class="card-head" style="gap:10px; flex-wrap:wrap">
+              <div style="display:flex; align-items:center; gap:8px">
+                <span style="color:var(--accent-bright)">${getMarketPlatformSvg(item.category)}</span>
+                <span>${esc(item.title)}</span>
+              </div>
+              <div class="market-badges-cluster">
+                <span class="badge-origin ${orig.cls}">${esc(orig.label)}</span>
+                <span class="badge-warranty">🛡️ ${esc(warText)}</span>
+              </div>
+            </div>
+            <div style="padding: 20px; display:flex; flex-direction:column; gap:16px">
+              <div>
+                <h4 style="margin:0 0 8px; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:0.5px">Описание и характеристики</h4>
+                <div style="font-size:14.5px; line-height:1.6; white-space:pre-wrap; word-break:break-word; color:#e2eaf4">
+                  ${esc(item.description || 'Продавец не указал подробное описание.')}
+                </div>
+              </div>
+
+              <div style="border-top:1px solid var(--border); padding-top:14px">
+                <table class="tbl">
+                  <tr><th style="width:160px">Категория</th><td>${esc(item.category.toUpperCase())}</td></tr>
+                  <tr><th>Происхождение</th><td>${esc(orig.label)}</td></tr>
+                  <tr><th>Гарантия</th><td>${esc(warText)}</td></tr>
+                  <tr><th>Дата публикации</th><td>${fmtDate(item.createdAt)}</td></tr>
+                  <tr><th>Просмотров</th><td>${item.views}</td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Правая колонка: покупка и продавец -->
+          <div style="display:flex; flex-direction:column; gap:16px">
+            <div class="card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.3)">
+              <div class="card-head">Оплата товара</div>
+              <div style="padding: 20px; display:flex; flex-direction:column; gap:16px">
+                <div>
+                  <div class="muted" style="font-size:12px; margin-bottom:4px">Стоимость товара:</div>
+                  <div style="font-size:28px; font-weight:800; color:#34d399">${item.price} ₽</div>
+                </div>
+
+                <div style="font-size:12px; color:var(--muted); line-height:1.4">
+                  🛡️ Покупка через безопасную сделку маркета. Данные от аккаунта будут выданы моментально после оплаты.
+                </div>
+
+                ${buyActionHtml}
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">Продавец</div>
+              <div style="padding: 18px; display:flex; flex-direction:column; gap:12px">
+                <div style="display:flex; align-items:center; gap:12px">
+                  ${avatar(item.sellerName, item.sellerColor, { avatar: item.sellerAvatar })}
+                  <div>
+                    <a href="#/profile/${esc(item.sellerName)}" style="font-weight:700; color:#fff; font-size:15px">${esc(item.sellerName)}</a>
+                    <div style="margin-top:2px">${roleBadge(item.sellerRole)}</div>
+                  </div>
+                </div>
+
+                <div style="display:flex; gap:8px; margin-top:4px">
+                  <a href="#/profile/${esc(item.sellerName)}" class="btn small ghost" style="flex:1; text-align:center">Профиль</a>
+                  <a href="#/messages" class="btn small" style="flex:1; text-align:center">Написать</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  } catch (err) {
+    app.innerHTML = `<div class="alert">${esc(err.message)}</div>`;
+  }
+}
+
+async function deleteMarketItem(id) {
+  if (!confirm('Вы уверены, что хотите снять этот товар с продажи?')) return;
+  try {
+    await api(`/api/market/${id}`, { method: 'DELETE' });
+    location.hash = '#/market';
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+// Модальное окно: Выставить аккаунт на продажу
+function openSellModal() {
+  if (!store.user) {
+    location.hash = '#/login';
+    return;
+  }
+  closeMarketModal();
+
+  const modal = document.createElement('div');
+  modal.className = 'market-modal-backdrop';
+  modal.onclick = (e) => { if (e.target === modal) closeMarketModal(); };
+
+  modal.innerHTML = `
+    <div class="market-modal">
+      <div class="market-modal-head">
+        <h3>
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="color:var(--accent-bright)"><path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2z"/></svg>
+          Выставить аккаунт на продажу
+        </h3>
+        <button class="market-modal-close" onclick="closeMarketModal()">&times;</button>
+      </div>
+
+      <div class="market-modal-body">
+        <div id="sellModalErr"></div>
+
+        <div class="market-field">
+          <label>Категория / Игра *</label>
+          <select id="sellCat">
+            <option value="cs2">CS 2</option>
+            <option value="steam">Steam</option>
+            <option value="telegram">Telegram</option>
+            <option value="discord">Discord</option>
+            <option value="epic">Epic Games</option>
+            <option value="valorant">Valorant</option>
+            <option value="fortnite">Fortnite</option>
+            <option value="genshin">Genshin Impact</option>
+            <option value="other">Minecraft / Другое</option>
+            <option value="services">Услуги и софт</option>
+          </select>
+        </div>
+
+        <div class="market-field">
+          <label>Название объявления *</label>
+          <input id="sellTitle" placeholder="например: CS2 Prime (15 медалей) + Инвентарь 3000₽ | Родная почта" maxlength="140">
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px">
+          <div class="market-field">
+            <label>Цена (в рублях ₽) *</label>
+            <input id="sellPrice" type="number" min="10" max="1000000" placeholder="490">
+          </div>
+
+          <div class="market-field">
+            <label>Происхождение *</label>
+            <select id="sellOrigin">
+              <option value="personal">Личный</option>
+              <option value="resale" selected>Перепродажа</option>
+              <option value="autoreg">Авторег</option>
+              <option value="brute">Брут</option>
+              <option value="phishing">Фишинг</option>
+              <option value="stealer">Стиллер</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="market-field">
+          <label>Гарантия *</label>
+          <select id="sellWarranty">
+            <option value="24h" selected>24 часа гарантии</option>
+            <option value="12h">12 часов гарантии</option>
+            <option value="3d">3 дня гарантии</option>
+            <option value="none">На момент покупки</option>
+          </select>
+        </div>
+
+        <div class="market-field">
+          <label>Описание и характеристики товара</label>
+          <textarea id="sellDesc" placeholder="Опишите аккаунт: инвентарь, ранг, ссылки, отлежку, наличие чеков..."></textarea>
+        </div>
+
+        <div class="market-field">
+          <label style="color:#38bdf8">Данные от аккаунта для покупателя *</label>
+          <textarea id="sellCreds" placeholder="Логин:Пароль, почта, секретный вопрос, токен...&#10;Будет выдано покупателю автоматически при оплате." style="border-color:rgba(56,189,248,0.4)"></textarea>
+          <small class="muted" style="font-size:11.5px">🔒 Данные хранятся в зашифрованном виде и передаются покупателю моментально в момент оплаты.</small>
+        </div>
+      </div>
+
+      <div class="market-modal-foot">
+        <button class="btn ghost small" onclick="closeMarketModal()">Отмена</button>
+        <button class="btn primary small" id="btnSubmitSell">Опубликовать на маркете</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  $('#btnSubmitSell').onclick = async () => {
+    const errBox = $('#sellModalErr');
+    try {
+      errBox.innerHTML = '';
+      const title = $('#sellTitle').value.trim();
+      const category = $('#sellCat').value;
+      const price = Number($('#sellPrice').value);
+      const origin = $('#sellOrigin').value;
+      const warranty = $('#sellWarranty').value;
+      const description = $('#sellDesc').value.trim();
+      const credentials = $('#sellCreds').value.trim();
+
+      if (title.length < 5) throw new Error('Заголовок должен содержать минимум 5 символов');
+      if (isNaN(price) || price < 10) throw new Error('Минимальная цена — 10 ₽');
+      if (!credentials) throw new Error('Укажите данные от аккаунта для покупателя');
+
+      const newItem = await api('/api/market', {
+        method: 'POST',
+        body: JSON.stringify({ title, category, price, origin, warranty, description, credentials }),
+      });
+
+      closeMarketModal();
+      location.hash = `#/market/${newItem.id}`;
+    } catch (err) {
+      errBox.innerHTML = `<div class="alert">${esc(err.message)}</div>`;
+    }
+  };
+}
+
+// Модальное окно: Покупка аккаунта
+async function openBuyModal(itemId) {
+  if (!store.user) {
+    location.hash = '#/login';
+    return;
+  }
+  closeMarketModal();
+
+  const modal = document.createElement('div');
+  modal.className = 'market-modal-backdrop';
+  modal.onclick = (e) => { if (e.target === modal) closeMarketModal(); };
+
+  modal.innerHTML = `
+    <div class="market-modal">
+      <div class="market-modal-head">
+        <h3>
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="color:#22c55e"><path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+          Покупка аккаунта
+        </h3>
+        <button class="market-modal-close" onclick="closeMarketModal()">&times;</button>
+      </div>
+      <div class="market-modal-body" id="buyModalContent">
+        <div class="muted">Загрузка данных товара...</div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  try {
+    const item = await api(`/api/market/${itemId}`);
+    const userBalance = store.user.balance || 0;
+    const canAfford = userBalance >= item.price;
+    const warText = MARKET_WARRANTIES[item.warranty] || 'Гарантия';
+
+    $('#buyModalContent').innerHTML = `
+      <div id="buyErr"></div>
+      <div>
+        <div style="font-size:16px; font-weight:700; color:#fff; margin-bottom:4px">${esc(item.title)}</div>
+        <div class="muted" style="font-size:12px">Продавец: <b>${esc(item.sellerName)}</b> · Гарантия: <b>${esc(warText)}</b></div>
+      </div>
+
+      <div style="background:#050d18; border:1px solid var(--border); border-radius:8px; padding:14px; display:flex; justify-content:space-between; align-items:center">
+        <div>
+          <div class="muted" style="font-size:11.5px">К списанию:</div>
+          <div style="font-size:22px; font-weight:800; color:#34d399">${item.price} ₽</div>
+        </div>
+        <div style="text-align:right">
+          <div class="muted" style="font-size:11.5px">Ваш баланс:</div>
+          <div style="font-size:16px; font-weight:700; color:${canAfford ? '#fff' : '#f87171'}">${userBalance} ₽</div>
+        </div>
+      </div>
+
+      ${canAfford ? `
+        <div class="notice" style="margin:0">
+          🛡️ Безопасная сделка. С вашего баланса спишется <b>${item.price} ₽</b>, данные от аккаунта будут выданы немедленно.
+        </div>
+        <div style="margin-top:10px">
+          <button class="btn primary" id="btnConfirmBuy" style="width:100%; padding:11px; font-weight:700">
+            Оплатить ${item.price} ₽ и получить данные
+          </button>
+        </div>
+      ` : `
+        <div class="alert" style="margin:0">
+          Недостаточно средств на балансе. Не хватает: <b>${item.price - userBalance} ₽</b>.
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px">
+          <button class="btn small primary" style="flex:1" onclick="closeMarketModal(); openDepositModal();">
+            Пополнить баланс (+${item.price - userBalance} ₽)
+          </button>
+        </div>
+      `}`;
+
+    $('#btnConfirmBuy')?.addEventListener('click', async () => {
+      const errBox = $('#buyErr');
+      try {
+        errBox.innerHTML = '<div class="muted">Обработка покупки...</div>';
+        const res = await api(`/api/market/${itemId}/buy`, { method: 'POST' });
+        store.user.balance = res.newBalance;
+        renderUserbox();
+
+        $('#buyModalContent').innerHTML = `
+          <div style="text-align:center; padding:10px 0">
+            <div style="font-size:42px; margin-bottom:8px">🎉</div>
+            <h3 style="margin:0 0 6px; color:#4ade80">Покупка успешно завершена!</h3>
+            <div class="muted" style="font-size:13px">С вашего баланса списано ${item.price} ₽. Остаток: <b>${res.newBalance} ₽</b></div>
+          </div>
+
+          <div class="market-unlocked-box">
+            <div class="market-unlocked-head">
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
+              <span>Данные для входа в аккаунт:</span>
+            </div>
+            <pre class="market-creds-pre" id="boughtCreds">${esc(res.item.credentials)}</pre>
+            <div style="margin-top:10px; display:flex; gap:10px">
+              <button class="btn small success" onclick="copyMarketText($('#boughtCreds').textContent, this)">Копировать данные</button>
+              <button class="btn small ghost" onclick="closeMarketModal(); location.hash='#/market/${item.id}';">К объявлению</button>
+            </div>
+          </div>`;
+      } catch (e) {
+        errBox.innerHTML = `<div class="alert">${esc(e.message)}</div>`;
+      }
+    });
+  } catch (err) {
+    $('#buyModalContent').innerHTML = `<div class="alert">${esc(err.message)}</div>`;
+  }
+}
+
+// Модальное окно: Пополнение баланса
+function openDepositModal() {
+  if (!store.user) {
+    location.hash = '#/login';
+    return;
+  }
+  closeMarketModal();
+
+  const modal = document.createElement('div');
+  modal.className = 'market-modal-backdrop';
+  modal.onclick = (e) => { if (e.target === modal) closeMarketModal(); };
+
+  modal.innerHTML = `
+    <div class="market-modal">
+      <div class="market-modal-head">
+        <h3>
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="color:#22c55e"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/></svg>
+          Пополнение баланса
+        </h3>
+        <button class="market-modal-close" onclick="closeMarketModal()">&times;</button>
+      </div>
+
+      <div class="market-modal-body">
+        <div id="depositErr"></div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#060f1b; border:1px solid var(--border); padding:12px 16px; border-radius:8px">
+          <span class="muted" style="font-size:13px">Текущий баланс:</span>
+          <span style="font-size:18px; font-weight:800; color:#34d399">${store.user.balance || 0} ₽</span>
+        </div>
+
+        <div>
+          <label style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px">Быстрый выбор суммы:</label>
+          <div class="deposit-chips-grid">
+            <button class="deposit-chip" onclick="$('#depAmount').value='200'">+200 ₽</button>
+            <button class="deposit-chip" onclick="$('#depAmount').value='500'">+500 ₽</button>
+            <button class="deposit-chip" onclick="$('#depAmount').value='1000'">+1 000 ₽</button>
+            <button class="deposit-chip" onclick="$('#depAmount').value='2500'">+2 500 ₽</button>
+            <button class="deposit-chip" onclick="$('#depAmount').value='5000'">+5 000 ₽</button>
+            <button class="deposit-chip" onclick="$('#depAmount').value='10000'">+10 000 ₽</button>
+          </div>
+        </div>
+
+        <div class="market-field">
+          <label>Сумма пополнения (₽)</label>
+          <input id="depAmount" type="number" min="10" max="100000" value="500" placeholder="500">
+        </div>
+      </div>
+
+      <div class="market-modal-foot">
+        <button class="btn ghost small" onclick="closeMarketModal()">Отмена</button>
+        <button class="btn primary small" id="btnDoDeposit">Пополнить баланс</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  $('#btnDoDeposit').onclick = async () => {
+    const errBox = $('#depositErr');
+    try {
+      errBox.innerHTML = '';
+      const amount = Number($('#depAmount').value);
+      if (isNaN(amount) || amount < 10) throw new Error('Минимальная сумма — 10 ₽');
+
+      const res = await api('/api/market/deposit', {
+        method: 'POST',
+        body: JSON.stringify({ amount }),
+      });
+
+      store.user.balance = res.balance;
+      renderUserbox();
+      closeMarketModal();
+
+      if (location.hash.startsWith('#/market')) {
+        router();
+      }
+    } catch (err) {
+      errBox.innerHTML = `<div class="alert">${esc(err.message)}</div>`;
+    }
+  };
+}
 
 // ---------- старт ----------
 (async () => {
